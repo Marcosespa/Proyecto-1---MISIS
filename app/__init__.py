@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import JWTManager
 from flask_cors import CORS
 from transformers import pipeline
+from flask_jwt_extended import get_jwt, jwt_required,get_jwt_identity
 
 db = SQLAlchemy()
 jwt = JWTManager()
@@ -29,5 +30,12 @@ def create_app():
     from app.docs import doc_routes
 
     app.register_blueprint(auth_routes)
+    
+    @app.route('/upload', methods=['POST'])
+    @jwt_required()
+    def wrapped_upload_file():
+        return doc_routes.upload_file(app)
+
+    app.register_blueprint(doc_routes)
 
     return app
