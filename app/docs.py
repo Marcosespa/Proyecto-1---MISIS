@@ -3,6 +3,9 @@ from werkzeug.utils import secure_filename
 from flask_jwt_extended import jwt_required
 import os
 from app import summarizer 
+from PyPDF2 import PdfReader
+from docx import Document
+
 
 doc_routes = Blueprint('docs', __name__)
 UPLOAD_FOLDER = 'uploads'
@@ -62,12 +65,10 @@ def process_and_summarize():
                 with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
                     text = f.read()
             elif filename.endswith('.pdf'):
-                from PyPDF2 import PdfReader
                 reader = PdfReader(filepath)
                 for page in reader.pages:
                     text += page.extract_text()
             elif filename.endswith('.docx'):
-                from docx import Document
                 document = Document(filepath)
                 text = "\n".join([paragraph.text for paragraph in document.paragraphs])
             else:
@@ -85,7 +86,6 @@ def process_and_summarize():
         except Exception as e:
             result = jsonify({'error': str(e)}), 500
         finally:
-            # Limpieza: Eliminar el archivo temporal si no es necesario mantenerlo
             os.remove(filepath)
         
         return result
