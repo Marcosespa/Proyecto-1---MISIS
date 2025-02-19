@@ -4,6 +4,7 @@ from flask_jwt_extended import JWTManager
 from flask_cors import CORS
 from transformers import pipeline
 from flask_jwt_extended import get_jwt, jwt_required,get_jwt_identity
+import os
 
 db = SQLAlchemy()
 jwt = JWTManager()
@@ -21,21 +22,24 @@ def create_app():
     app.config['JWT_SECRET_KEY'] = 'super-secret-key' 
     app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
+    if not os.path.exists(app.config['UPLOAD_FOLDER']):
+        os.makedirs(app.config['UPLOAD_FOLDER'])
+
+
     db.init_app(app)
     jwt.init_app(app)
     global summarizer
     summarizer = pipeline("summarization")
     
     from app.auth import auth_routes 
-    from app.docs import doc_routes
-
+    from app.docs import doc_routes, upload_file 
+    
     app.register_blueprint(auth_routes)
+    app.register_blueprint(doc_routes)
     
     @app.route('/upload', methods=['POST'])
     @jwt_required()
     def wrapped_upload_file():
-        return doc_routes.upload_file(app)
-
-    app.register_blueprint(doc_routes)
-
+        return upload_file(app)
+    
     return app
