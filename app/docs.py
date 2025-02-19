@@ -74,7 +74,7 @@ def process_and_summarize():
                 return jsonify({'error': 'File format not supported'}), 400
 
             # Llama al endpoint de resumen usando directamente el sumarizador
-            summary = summarizer(text, max_length=130, min_length=30, do_sample=False)
+            summary = summarizer(text, max_length=500, min_length=30, do_sample=False)
             if summary and 'summary_text' in summary[0]:
                 result = jsonify({'summary': summary[0]['summary_text']}), 200
             else:
