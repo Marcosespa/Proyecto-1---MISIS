@@ -1,0 +1,197 @@
+{
+	"info": {
+		"_postman_id": "6c800280-9909-4088-95e7-88e18257d92c",
+		"name": "Colection pruebas",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "32576653"
+	},
+	"item": [
+		{
+			"name": "registrar usuario",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"nombre_usuario\": \"usuario1\",\n    \"contrasena\": \"password123\",\n    \"imagen_perfil\": \"https://ejemplo.com/foto.jpg\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/registro",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"registro"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Generar Token de Acceso",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"nombre_usuario\": \"usuario2\",\n    \"contrasena\": \"password123\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/login",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Revisar usuario",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"nombre_usuario\": \"usuario1\",\n    \"contrasena\": \"password123\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/login",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Probar envio de documentos",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTczOTg5MzM1NiwianRpIjoiNDliZjQ3Y2QtOTgxOS00YTAzLWI2YmItNzc0M2M2YWRjYjljIiwidHlwZSI6ImFjY2VzcyIsInN1YiI6IjEiLCJuYmYiOjE3Mzk4OTMzNTYsImNzcmYiOiI5NTllZjdhYi01OTczLTQ2OWUtYTk4MC01YjIwMzRiMzE2ZmEiLCJleHAiOjE3Mzk4OTQyNTZ9.Fn2wcBbl8d2v1KcaUSMhxQb-NJ2ILfd2Kn0XxadUEPA",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "file",
+							"type": "file",
+							"src": "/Users/marcosrodrigo/Downloads/Entrega 1 - SaaS.pdf"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost:8080/upload",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"upload"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Preguntar",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTczOTkyNjQwNSwianRpIjoiMmFhY2FjMDAtNGQyMi00YjQ5LTkzNzUtNWUwZjYxM2UwZDFkIiwidHlwZSI6ImFjY2VzcyIsInN1YiI6IjEiLCJuYmYiOjE3Mzk5MjY0MDUsImNzcmYiOiIzNjE4YmY0Mi0yMTQ5LTQ5YjYtYWNiYy1lYmEyOGE5YmUzYjkiLCJleHAiOjE3Mzk5MjczMDV9.oVDYOYmHQnT7Zx8WnySqV1cSmoiznJSUTXFQ8Zs8jUo",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"question\": \"Hazme un resumen de este documento\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/ask",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"ask"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Resumen",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTczOTkyNDM0NywianRpIjoiMGU1NjNiNDEtNzZhMC00OWE3LWFiZDAtNWJkMjMxMzQxYTk2IiwidHlwZSI6ImFjY2VzcyIsInN1YiI6IjEiLCJuYmYiOjE3Mzk5MjQzNDcsImNzcmYiOiIyZDU0Yzk0Ny1iZGE3LTRiNGEtOTM3NS1lOThhMDUxNzRlNzQiLCJleHAiOjE3Mzk5MjUyNDd9.ic0LjqHKgzR49IVxt6Q-TLGqPUmBLmjaNGCI2-qVhLE",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/summarize",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"summarize"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
