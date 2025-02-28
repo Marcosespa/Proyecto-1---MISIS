@@ -10,7 +10,7 @@ llm = Llama(
     use_mlock=True  # Esto puede estabilizar el rendimiento en algunos sistemas
 )
 
-# Realizar un warm-up
+# Realizar un warm-up   
 llm("Un prompt corto para calentar el modelo", max_tokens=10)
 
 start_time = time.time()

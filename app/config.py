@@ -1,9 +1,12 @@
 import os
+from pydantic import BaseSettings
 
-class Config:
-    # Configuración de la base de datos (SQLite)
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///tasks.db'
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
+class Settings(BaseSettings):
+    database_url: str = "sqlite:///./test.db"
+    jwt_secret_key: str = "super-secret-key"
+    upload_folder: str = "./uploads"
 
-    # Configuración de JWT
-    JWT_SECRET_KEY = 'super-secret-key'  
+    class Config:
+        env_file = ".env"
+
+settings = Settings()
