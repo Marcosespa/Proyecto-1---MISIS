@@ -1,60 +1,67 @@
-from fastapi import APIRouter, HTTPException, Depends, status
-from sqlalchemy.orm import Session
-from app import models
-from app.database import get_db
-from pydantic import BaseModel
-from fastapi_jwt_auth import AuthJWT
+from flask import Blueprint, request, jsonify
+from werkzeug.security import generate_password_hash, check_password_hash
+from .models import Usuario
+from .database import SessionLocal
+from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 
-router = APIRouter(prefix="/auth", tags=["auth"])
+auth_bp = Blueprint('auth', __name__)
 
-class RegistroModel(BaseModel):
-    nombre_usuario: str
-    contrasena: str
-    imagen_perfil: str = None
+@auth_bp.route('/registro', methods=['POST'])
+def registro():
+    data = request.get_json()
+    db = SessionLocal()
+    try:
+        usuario = db.query(Usuario).filter(Usuario.nombre_usuario == data['nombre_usuario']).first()
+        if usuario:
+            return jsonify({"mensaje": "Usuario ya registrado"}), 400
+        nuevo_usuario = Usuario(
+            nombre_usuario=data['nombre_usuario'],
+            imagen_perfil=data.get('imagen_perfil')
+        )
+        nuevo_usuario.set_password(data['contrasena'])
+        db.add(nuevo_usuario)
+        db.commit()
+        db.refresh(nuevo_usuario)
+        return jsonify({"mensaje": "Usuario registrado"}), 201
+    finally:
+        db.close()
 
-class LoginModel(BaseModel):
-    nombre_usuario: str
-    contrasena: str
+@auth_bp.route('/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    db = SessionLocal()
+    try:
+        usuario = db.query(Usuario).filter(Usuario.nombre_usuario == data['nombre_usuario']).first()
+        if not usuario or not usuario.check_password(data['contrasena']):
+            return jsonify({"mensaje": "Credenciales inválidas"}), 401
+        access_token = create_access_token(identity=usuario.id)
+        # Forzar conversión a str si fuera bytes
+        if isinstance(access_token, bytes):
+            access_token = access_token.decode('utf-8')
+        else:
+            access_token = str(access_token)
+        return jsonify({"access_token": access_token}), 200
+    finally:
+        db.close()
 
-@router.post("/registro", status_code=status.HTTP_201_CREATED)
-def registro(usuario: RegistroModel, db: Session = Depends(get_db)):
-    # Verificar si el usuario ya existe
-    db_usuario = db.query(models.Usuario).filter(models.Usuario.nombre_usuario == usuario.nombre_usuario).first()
-    if db_usuario:
-        raise HTTPException(status_code=400, detail="Usuario ya registrado")
-    nuevo_usuario = models.Usuario(
-        nombre_usuario=usuario.nombre_usuario,
-        imagen_perfil=usuario.imagen_perfil
-    )
-    nuevo_usuario.set_password(usuario.contrasena)
-    db.add(nuevo_usuario)
-    db.commit()
-    db.refresh(nuevo_usuario)
-    return {"mensaje": "Usuario registrado"}
+@auth_bp.route('/logout', methods=['POST'])
+@jwt_required()
+def logout():
+    return jsonify({"mensaje": "Sesión cerrada"}), 200
 
-@router.post("/login")
-def login(user: LoginModel, Authorize: AuthJWT = Depends(), db: Session = Depends(get_db)):
-    db_usuario = db.query(models.Usuario).filter(models.Usuario.nombre_usuario == user.nombre_usuario).first()
-    if not db_usuario or not db_usuario.check_password(user.contrasena):
-        raise HTTPException(status_code=401, detail="Credenciales inválidas")
-    access_token = Authorize.create_access_token(subject=db_usuario.id)
-    return {"access_token": access_token}
-
-@router.post("/logout")
-def logout(Authorize: AuthJWT = Depends()):
-    Authorize.jwt_required()
-    return {"mensaje": "Sesión cerrada"}
-
-@router.get("/usuarios/me")
-def obtener_usuario_actual(Authorize: AuthJWT = Depends(), db: Session = Depends(get_db)):
-    Authorize.jwt_required()
-    user_id = Authorize.get_jwt_subject()
-    db_usuario = db.get(models.Usuario, user_id)
-
-    if not db_usuario:
-        raise HTTPException(status_code=404, detail="Usuario no encontrado")
-    return {
-        "id": db_usuario.id,
-        "nombre_usuario": db_usuario.nombre_usuario,
-        "imagen_perfil": db_usuario.imagen_perfil
-    }
+@auth_bp.route('/usuarios/me', methods=['GET'])
+@jwt_required()
+def obtener_usuario_actual():
+    user_id = get_jwt_identity()
+    db = SessionLocal()
+    try:
+        usuario = db.get(Usuario, user_id)
+        if not usuario:
+            return jsonify({"mensaje": "Usuario no encontrado"}), 404
+        return jsonify({
+            "id": usuario.id,
+            "nombre_usuario": usuario.nombre_usuario,
+            "imagen_perfil": usuario.imagen_perfil
+        }), 200
+    finally:
+        db.close()

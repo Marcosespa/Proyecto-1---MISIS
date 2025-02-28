@@ -1,24 +1,32 @@
-from fastapi import FastAPI
-from app.auth import router as auth_router
-from app.docs import router as docs_router
-from app.config import settings
-from fastapi_jwt_auth import AuthJWT
-from pydantic import BaseModel
-from app.database import engine
-from app.models import Usuario
-from app.database import Base
+from flask import Flask
+from .auth import auth_bp
+from .docs import docs_bp
+from .config import config
+from flask_jwt_extended import JWTManager
+from .database import engine, Base
 
-# Crear las tablas de la base de datos
-Base.metadata.create_all(bind=engine)
+def create_app():
+    app = Flask(__name__)
+    
+    # Configuración
+    app.config['SQLALCHEMY_DATABASE_URI'] = config.SQLALCHEMY_DATABASE_URI
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = config.SQLALCHEMY_TRACK_MODIFICATIONS
+    app.config['JWT_SECRET_KEY'] = config.JWT_SECRET_KEY
+    app.config['UPLOAD_FOLDER'] = config.UPLOAD_FOLDER
+    
+    # Inicializar JWT
+    jwt = JWTManager(app)
+    
+    # Registrar Blueprints
+    app.register_blueprint(auth_bp, url_prefix='/auth')
+    app.register_blueprint(docs_bp, url_prefix='/docs')
+    
+    # Crear tablas de la base de datos
+    Base.metadata.create_all(bind=engine)
+    
+    return app
 
-app = FastAPI(title="Document Management and AI Analysis SaaS")
+app = create_app()
 
-app.include_router(auth_router)
-app.include_router(docs_router)
-
-class SettingsModel(BaseModel):
-    authjwt_secret_key: str = settings.jwt_secret_key
-
-@AuthJWT.load_config
-def get_config():
-    return SettingsModel()
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=8080,debug=True)
