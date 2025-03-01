@@ -25,12 +25,28 @@ def create_app():
     if not os.path.exists(app.config['UPLOAD_FOLDER']):
         os.makedirs(app.config['UPLOAD_FOLDER'])
 
-
     db.init_app(app)
     jwt.init_app(app)
-    global summarizer
-    summarizer = pipeline("summarization")
     
+    # SI ES QUE NO DEJAMOS EL ARCHIVO GGUF 
+    # global summarizer
+    # summarizer = pipeline("summarization")
+    
+    from llama_cpp import Llama
+    MODEL_PATH="/Users/marcosrodrigo/Desktop/Universidad/Quinto semestre/Desarrollo de Soluciones Cloud/mistral-7b-instruct.Q4_K_M.gguf"
+
+    def load_summarizer():
+        return Llama(
+            model_path=MODEL_PATH,
+            n_ctx=2048,  # Reduce el uso de memoria
+            n_threads=4,  # Limita el uso de CPU
+            n_batch=8,  # Controla el procesamiento por lotes
+            verbose=False  # Desactiva logs innecesarios
+        )
+    global summarizer
+    summarizer = load_summarizer()
+        
+    # Importar y registrar Blueprints
     from app.auth import auth_bp 
     from app.docs import docs_bp, upload_file 
     

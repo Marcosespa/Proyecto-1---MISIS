@@ -34,7 +34,7 @@ def login():
         usuario = db.query(Usuario).filter(Usuario.nombre_usuario == data['nombre_usuario']).first()
         if not usuario or not usuario.check_password(data['contrasena']):
             return jsonify({"mensaje": "Credenciales inválidas"}), 401
-        access_token = create_access_token(identity=usuario.id)
+        access_token = create_access_token(identity=str(usuario.id))
         # Forzar conversión a str si fuera bytes
         if isinstance(access_token, bytes):
             access_token = access_token.decode('utf-8')
