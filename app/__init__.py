@@ -31,11 +31,11 @@ def create_app():
     global summarizer
     summarizer = pipeline("summarization")
     
-    from app.auth import auth_routes 
-    from app.docs import doc_routes, upload_file 
+    from app.auth import auth_bp 
+    from app.docs import docs_bp, upload_file 
     
-    app.register_blueprint(auth_routes)
-    app.register_blueprint(doc_routes)
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(docs_bp)
     
     @app.route('/upload', methods=['POST'])
     @jwt_required()
