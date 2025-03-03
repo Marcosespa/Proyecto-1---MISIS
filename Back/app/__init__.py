@@ -16,8 +16,9 @@ def allowed_file(filename):
 
 def create_app():
     app = Flask(__name__)
-    CORS(app, origins="http://localhost:8000")
-
+    # CORS(app, origins="http://localhost:8000")
+    CORS(app, resources={r"/*": {"origins": "http://localhost:8000", "allow_headers": ["Authorization", "Content-Type"]}})
+    
     app.config.from_object('app.config.Config')
     app.config['JWT_SECRET_KEY'] = 'super-secret-key' 
     app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -40,5 +41,9 @@ def create_app():
     @jwt_required()
     def wrapped_upload_file():
         return upload_file(app)
-    
+    # back/run.py
+    # @app.route('/')
+    # @app.route('/login')
+    # def serve_login():
+    #     return send_from_directory(app.static_folder, 'login.html')
     return app
