@@ -2,7 +2,7 @@
 document.addEventListener('DOMContentLoaded', function () {
   const token = localStorage.getItem('token');
   if (!token) {
-      window.location.href = '/login'; // Redirigir a login si no hay token
+      window.location.href = '/index.html'; // Redirigir a login si no hay token
       return;
   }
 
@@ -43,99 +43,99 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Subir archivo
   window.uploadFile = function () {
-      const fileInput = document.getElementById('fileInput');
-      const file = fileInput.files[0];
-      if (!file) {
-          alert('Selecciona un archivo');
-          return;
-      }
-      const formData = new FormData();
-      formData.append('file', file); // Coincide con 'file' en el backend
+    const fileInput = document.getElementById('fileInput');
+    const file = fileInput.files[0];
+    if (!file) {
+        alert('Selecciona un archivo');
+        return;
+    }
+    const formData = new FormData();
+    formData.append('file', file); // Coincide con 'file' en el backend
 
-      fetch('http://127.0.0.1:8080/upload', {
-          method: 'POST',
-          headers: {
-              'Authorization': `Bearer ${token}`
-          },
-          body: formData
-      })
-      .then(response => response.json())
-      .then(data => {
-          const uploadMessage = document.getElementById('upload-message');
-          if (response.ok) {
-              uploadMessage.textContent = `${data.message} (${data.filename})`;
-              uploadMessage.className = 'success';
-          } else {
-              throw new Error(data.error || 'Error al subir archivo');
-          }
-      })
-      .catch(error => {
-          document.getElementById('upload-message').textContent = error.message;
-          document.getElementById('upload-message').className = 'error';
-      });
-  };
+    fetch('http://127.0.0.1:8080/upload', {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${token}`
+        },
+        body: formData
+    })
+    .then(response => response.json().then(data => ({ status: response.status, body: data }))) // ✅ Captura la respuesta correctamente
+    .then(({ status, body }) => {
+        const uploadMessage = document.getElementById('upload-message');
+        if (status === 200) {  // ✅ Ahora validamos el código de respuesta HTTP
+            uploadMessage.textContent = `${body.message} (${body.filename})`;
+            uploadMessage.className = 'success';
+        } else {
+            throw new Error(body.error || 'Error al subir archivo');
+        }
+    })
+    .catch(error => {
+        document.getElementById('upload-message').textContent = error.message;
+        document.getElementById('upload-message').className = 'error';
+    });
+};
+
 
   // Generar resumen
   window.summarize = function () {
-      fetch('http://127.0.0.1:8080/summarize', {
-          method: 'POST',
-          headers: {
-              'Authorization': `Bearer ${token}`
-          }
-      })
-      .then(response => response.json())
-      .then(data => {
-          const summaryMessage = document.getElementById('summary-message');
-          if (response.ok) {
-              document.getElementById('summary-result').value = data.summary;
-              summaryMessage.textContent = 'Resumen generado';
-              summaryMessage.className = 'success';
-          } else {
-              throw new Error(data.error || 'Error al generar resumen');
-          }
-      })
-      .catch(error => {
-          document.getElementById('summary-message').textContent = error.message;
-          document.getElementById('summary-message').className = 'error';
-      });
-  };
+    fetch('http://127.0.0.1:8080/summarize', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+    })
+    .then(response => response.json().then(data => ({ status: response.status, body: data })))
+    .then(({ status, body }) => {
+        const summaryMessage = document.getElementById('summary-message');
+        if (status === 200) {
+            document.getElementById('summary-result').value = body.summary;
+            summaryMessage.textContent = 'Resumen generado';
+            summaryMessage.className = 'success';
+        } else {
+            throw new Error(body.error || 'Error al generar resumen');
+        }
+    })
+    .catch(error => {
+        document.getElementById('summary-message').textContent = error.message;
+        document.getElementById('summary-message').className = 'error';
+    });
+};
 
   // Hacer pregunta
   window.askQuestion = function () {
-      const question = document.getElementById('question').value;
-      if (!question) {
-          alert('Escribe una pregunta');
-          return;
-      }
-      fetch('http://127.0.0.1:8080/ask', {
-          method: 'POST',
-          headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({ question }) // Coincide con el backend esperando "question"
-      })
-      .then(response => response.json())
-      .then(data => {
-          const askMessage = document.getElementById('ask-message');
-          if (response.ok) {
-              document.getElementById('answer-result').value = data.answer;
-              askMessage.textContent = 'Pregunta respondida';
-              askMessage.className = 'success';
-          } else {
-              throw new Error(data.error || 'Error al responder pregunta');
-          }
-      })
-      .catch(error => {
-          document.getElementById('ask-message').textContent = error.message;
-          document.getElementById('ask-message').className = 'error';
-      });
-  };
+    const question = document.getElementById('question').value;
+    if (!question) {
+        alert('Escribe una pregunta');
+        return;
+    }
+    fetch('http://127.0.0.1:8080/ask', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ question })
+    })
+    .then(response => response.json().then(data => ({ status: response.status, body: data })))
+    .then(({ status, body }) => {
+        const askMessage = document.getElementById('ask-message');
+        if (status === 200) {
+            document.getElementById('answer-result').value = body.answer;
+            askMessage.textContent = 'Pregunta respondida';
+            askMessage.className = 'success';
+        } else {
+            throw new Error(body.error || 'Error al responder pregunta');
+        }
+    })
+    .catch(error => {
+        document.getElementById('ask-message').textContent = error.message;
+        document.getElementById('ask-message').className = 'error';
+    });
+};
+
 
   // Cerrar sesión
   window.logout = function () {
       localStorage.removeItem('token');
-      window.location.href = '/login';
+      window.location.href = '/index.html';
   };
 
   // Iniciar cargando los datos del usuario

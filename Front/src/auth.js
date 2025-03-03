@@ -37,7 +37,7 @@ function iniciarSesion(nombreUsuario, contrasena) {
   .then(data => {
       if (data.access_token) {
           localStorage.setItem('token', data.access_token);
-          window.location.href = '/index.html';
+          window.location.href = '/resumen.html';
       } else {
           alert('Error al iniciar sesión');
       }
@@ -60,7 +60,7 @@ function registrarUsuario(nombreUsuario, contrasena, imagenPerfil) {
   .then(response => response.json())
   .then(data => {
       if (data.mensaje === 'Usuario registrado') {
-          window.location.href = '/index.html';
+          window.location.href = '/resumen.html';
       } else {
           alert('Error al registrar usuario');
       }
