@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, Text, ForeignKey
 from .database import Base
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -14,3 +14,11 @@ class Usuario(Base):
 
     def check_password(self, password: str):
         return check_password_hash(self.contrasena, password)
+    
+class Documento(Base):
+    __tablename__ = 'documentos'
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey('usuarios.id'), nullable=False)
+    filename = Column(String(256), nullable=False)
+    text = Column(Text, nullable=False)
+    summary = Column(Text, nullable=True)

@@ -29,12 +29,11 @@ def create_app():
     jwt.init_app(app)
         
     # Importar y registrar Blueprints
-    
     from app.auth import auth_bp 
     from app.docs import docs_bp, upload_file 
-    
-    app.register_blueprint(auth_bp)
-    app.register_blueprint(docs_bp)
+
+    app.register_blueprint(auth_bp, url_prefix="/auth")
+    app.register_blueprint(docs_bp, url_prefix="/docs")
     
     @app.route('/upload', methods=['POST'])
     @jwt_required()
