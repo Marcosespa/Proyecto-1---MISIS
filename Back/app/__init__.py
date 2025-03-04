@@ -31,17 +31,10 @@ def create_app():
         
     # Importar y registrar Blueprints
     from app.auth import auth_bp 
-<<<<<<< HEAD:app/__init__.py
     from app.docs import docs_bp, upload_file 
 
     app.register_blueprint(auth_bp, url_prefix="/auth")
     app.register_blueprint(docs_bp, url_prefix="/docs")
-=======
-    from app.docs import docs_bp # , upload_file 
-    
-    app.register_blueprint(auth_bp)
-    app.register_blueprint(docs_bp)
->>>>>>> origin/Marcos:Back/app/__init__.py
     
     # @app.route('/upload', methods=['POST'])
     # @jwt_required()
