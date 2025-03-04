@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 function iniciarSesion(nombreUsuario, contrasena) {
-  fetch('http://localhost:8080/login', {
+  fetch('https://backend-622667124527.us-central1.run.app/login', {
       method: 'POST',
       headers: {
           'Content-Type': 'application/json'
@@ -37,7 +37,7 @@ function iniciarSesion(nombreUsuario, contrasena) {
   .then(data => {
       if (data.access_token) {
           localStorage.setItem('token', data.access_token);
-          window.location.href = '/tareas.html';
+          window.location.href = '/resumen.html';
       } else {
           alert('Error al iniciar sesión');
       }
@@ -46,7 +46,7 @@ function iniciarSesion(nombreUsuario, contrasena) {
 }
 
 function registrarUsuario(nombreUsuario, contrasena, imagenPerfil) {
-  fetch('http://localhost:8080/registro', {
+  fetch('https://backend-622667124527.us-central1.run.app/registro', {
       method: 'POST',
       headers: {
           'Content-Type': 'application/json'
@@ -60,7 +60,7 @@ function registrarUsuario(nombreUsuario, contrasena, imagenPerfil) {
   .then(response => response.json())
   .then(data => {
       if (data.mensaje === 'Usuario registrado') {
-          window.location.href = '/index.html';
+          window.location.href = '/resumen.html';
       } else {
           alert('Error al registrar usuario');
       }

@@ -16,8 +16,9 @@ def allowed_file(filename):
 
 def create_app():
     app = Flask(__name__)
-    CORS(app, origins="http://localhost:8000")
-
+    # CORS(app, origins="http://localhost:8000")
+    CORS(app, resources={r"/*": {"origins": "*", "allow_headers": ["Authorization", "Content-Type"]}})
+    
     app.config.from_object('app.config.Config')
     app.config['JWT_SECRET_KEY'] = 'super-secret-key' 
     app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -30,14 +31,21 @@ def create_app():
         
     # Importar y registrar Blueprints
     from app.auth import auth_bp 
+<<<<<<< HEAD:app/__init__.py
     from app.docs import docs_bp, upload_file 
 
     app.register_blueprint(auth_bp, url_prefix="/auth")
     app.register_blueprint(docs_bp, url_prefix="/docs")
+=======
+    from app.docs import docs_bp # , upload_file 
     
-    @app.route('/upload', methods=['POST'])
-    @jwt_required()
-    def wrapped_upload_file():
-        return upload_file(app)
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(docs_bp)
+>>>>>>> origin/Marcos:Back/app/__init__.py
+    
+    # @app.route('/upload', methods=['POST'])
+    # @jwt_required()
+    # def wrapped_upload_file():
+    #     return upload_file(app)
     
     return app

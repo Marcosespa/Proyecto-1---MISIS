@@ -40,6 +40,13 @@ def extract_text(filepath: str, filename: str) -> str:
 @jwt_required()
 def upload_file():
     user_id = get_jwt_identity()
+    
+    print("request.method:", request.method)
+    print("request.headers:", request.headers)
+    print("request.files:", request.files)
+    print("request.form:", request.form)  # Para ver si hay otros campos
+    
+    
     if 'file' not in request.files:
         return jsonify({'error': 'No file part in the request'}), 400
     file = request.files['file']
