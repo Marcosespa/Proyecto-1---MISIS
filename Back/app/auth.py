@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy.exc import IntegrityError
 from .models import Usuario
-from .database import SessionLocal
+from app import db
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 
 auth_bp = Blueprint('auth', __name__)
@@ -10,7 +10,7 @@ auth_bp = Blueprint('auth', __name__)
 @auth_bp.route('/registro', methods=['POST'])
 def registro():
     data = request.get_json()
-    db = SessionLocal()
+    session = db.session
     try:
         nombre_usuario = data['nombre_usuario'].lower()
         usuario = db.query(Usuario).filter(Usuario.nombre_usuario == nombre_usuario).first()
@@ -21,9 +21,9 @@ def registro():
             imagen_perfil=data.get('imagen_perfil')
         )
         nuevo_usuario.set_password(data['contrasena'])
-        db.add(nuevo_usuario)
-        db.commit()
-        db.refresh(nuevo_usuario)
+        session.add(nuevo_usuario)
+        session.commit()
+        session.refresh(nuevo_usuario)
         return jsonify({"mensaje": "Usuario registrado"}), 201
     except IntegrityError:
         db.rollback()
@@ -34,20 +34,18 @@ def registro():
 @auth_bp.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
-    db = SessionLocal()
+    session = db.session
     try:
-        usuario = db.query(Usuario).filter(Usuario.nombre_usuario == data['nombre_usuario']).first()
+        usuario = session.query(Usuario).filter(Usuario.nombre_usuario == data['nombre_usuario']).first()
         if not usuario or not usuario.check_password(data['contrasena']):
             return jsonify({"mensaje": "Credenciales inválidas"}), 401
         access_token = create_access_token(identity=str(usuario.id))
-        # Forzar conversión a str si fuera bytes
         if isinstance(access_token, bytes):
             access_token = access_token.decode('utf-8')
-        else:
-            access_token = str(access_token)
         return jsonify({"access_token": access_token}), 200
-    finally:
-        db.close()
+    except Exception as e:
+        return jsonify({"mensaje": str(e)}), 500
+
 
 @auth_bp.route('/logout', methods=['POST'])
 @jwt_required()
@@ -58,15 +56,12 @@ def logout():
 @jwt_required()
 def obtener_usuario_actual():
     user_id = get_jwt_identity()
-    db = SessionLocal()
-    try:
-        usuario = db.get(Usuario, user_id)
-        if not usuario:
-            return jsonify({"mensaje": "Usuario no encontrado"}), 404
-        return jsonify({
-            "id": usuario.id,
-            "nombre_usuario": usuario.nombre_usuario,
-            "imagen_perfil": usuario.imagen_perfil
-        }), 200
-    finally:
-        db.close()
+    session = db.session
+    usuario = session.get(Usuario, user_id)
+    if not usuario:
+        return jsonify({"mensaje": "Usuario no encontrado"}), 404
+    return jsonify({
+        "id": usuario.id,
+        "nombre_usuario": usuario.nombre_usuario,
+        "imagen_perfil": usuario.imagen_perfil
+    }), 200

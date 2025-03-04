@@ -1,15 +1,15 @@
 import time
 from llama_cpp import Llama
 
-# Configuración del modelo con ajustes
+# Configuracion del modelo
 llm = Llama(
-    # model_path="mistral-7b-instruct.Q4_K_M.gguf",  # Asegúrate de que el archivo exista en la ruta configurada
-    model_path= "mistral-7b-instruct-v0.1.Q4_K_M.gguf",  # Asegúrate de que el archivo exista en la ruta configurada
-    n_ctx=2024,      # Context window de 512 tokens
-    n_threads=4,    # Ajusta según tu CPU
-    n_batch=8,      # Puedes probar con diferentes valores
-    verbose=False, # Desactiva logs innecesarios
-    use_mlock=True  # Esto puede estabilizar el rendimiento en algunos sistemas
+    # model_path="mistral-7b-instruct.Q4_K_M.gguf",
+    model_path= "mistral-7b-instruct-v0.1.Q4_K_M.gguf",
+    n_ctx=2024,
+    n_threads=4,
+    n_batch=8,      
+    verbose=False,
+    use_mlock=True  
 )
 
 # Realizar un warm-up

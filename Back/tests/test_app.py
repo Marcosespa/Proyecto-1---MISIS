@@ -145,6 +145,7 @@ def test_summarize_without_upload():
     assert response.status_code == 400
     assert response.get_json()["error"] == "No se encontró documento cargado para este usuario"
 
+
 def test_ask_without_question(auth_header):
     response = client.post("/docs/ask", headers=auth_header, json={})
     assert response.status_code == 400
