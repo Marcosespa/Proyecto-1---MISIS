@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Obtener datos del usuario autenticado
   function obtenerUsuarioLoggeado() {
-      fetch('http://127.0.0.1:8080/usuarios/me', {
+      fetch('https://backend-622667124527.us-central1.run.app/usuarios/me', {
           method: 'GET',
           headers: {
               'Authorization': `Bearer ${token}`
@@ -52,7 +52,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const formData = new FormData();
     formData.append('file', file); // Coincide con 'file' en el backend
 
-    fetch('http://127.0.0.1:8080/upload', {
+    fetch('https://backend-622667124527.us-central1.run.app/upload', {
         method: 'POST',
         headers: {
             'Authorization': `Bearer ${token}`
@@ -78,7 +78,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Generar resumen
   window.summarize = function () {
-    fetch('http://127.0.0.1:8080/summarize', {
+    fetch('https://backend-622667124527.us-central1.run.app/summarize', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
     })
@@ -106,7 +106,7 @@ document.addEventListener('DOMContentLoaded', function () {
         alert('Escribe una pregunta');
         return;
     }
-    fetch('http://127.0.0.1:8080/ask', {
+    fetch('https://backend-622667124527.us-central1.run.app/ask', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 function iniciarSesion(nombreUsuario, contrasena) {
-  fetch('http://localhost:8080/login', {
+  fetch('https://backend-622667124527.us-central1.run.app/login', {
       method: 'POST',
       headers: {
           'Content-Type': 'application/json'
@@ -46,7 +46,7 @@ function iniciarSesion(nombreUsuario, contrasena) {
 }
 
 function registrarUsuario(nombreUsuario, contrasena, imagenPerfil) {
-  fetch('http://localhost:8080/registro', {
+  fetch('https://backend-622667124527.us-central1.run.app/registro', {
       method: 'POST',
       headers: {
           'Content-Type': 'application/json'

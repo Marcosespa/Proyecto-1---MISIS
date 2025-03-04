@@ -15,7 +15,6 @@ Esta aplicación permite la gestión, análisis y resumen automatizado de docume
 
 1. Clona el repositorio.
 2. Ejecuta: `docker-compose up --build`
-
 3. La aplicación estará disponible en `http://localhost:8000`
 
 ### Ejecución local sin Docker

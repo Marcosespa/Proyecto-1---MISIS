@@ -17,7 +17,7 @@ def allowed_file(filename):
 def create_app():
     app = Flask(__name__)
     # CORS(app, origins="http://localhost:8000")
-    CORS(app, resources={r"/*": {"origins": "http://localhost:3000", "allow_headers": ["Authorization", "Content-Type"]}})
+    CORS(app, resources={r"/*": {"origins": "*", "allow_headers": ["Authorization", "Content-Type"]}})
     
     app.config.from_object('app.config.Config')
     app.config['JWT_SECRET_KEY'] = 'super-secret-key' 
