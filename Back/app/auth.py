@@ -43,6 +43,11 @@ def login():
         return jsonify({"mensaje": str(e)}), 500
 
 
+@auth_bp.route('/logout', methods=['POST'])
+@jwt_required()
+def logout():
+    return jsonify({"mensaje": "Sesión cerrada"}), 200
+
 @auth_bp.route('/usuarios/me', methods=['GET'])
 @jwt_required()
 def obtener_usuario_actual():
