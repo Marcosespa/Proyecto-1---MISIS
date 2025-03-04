@@ -1,9 +1,6 @@
-# app/__init__.py
-
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
-from flask_jwt_extended import JWTManager
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import JWTManager, jwt_required
 from flask_cors import CORS
 import os
 
@@ -28,7 +25,7 @@ def create_app():
     db.init_app(app)
     jwt.init_app(app)
     
-    # Importar Blueprints (asegúrate de que en estos archivos se importen los modelos si es necesario)
+    # Importar Blueprints
     from app.auth import auth_bp 
     from app.docs import docs_bp, upload_file
     app.register_blueprint(auth_bp, url_prefix="/auth")
@@ -37,7 +34,7 @@ def create_app():
     @app.route('/upload', methods=['POST'])
     @jwt_required()
     def wrapped_upload_file():
-        return upload_file(app)
+        return upload_file()
     
     from app.models import Usuario, Documento
     with app.app_context():

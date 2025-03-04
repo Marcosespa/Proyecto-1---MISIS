@@ -1,6 +1,5 @@
 from flask import Blueprint, request, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
-from sqlalchemy.exc import IntegrityError
 from .models import Usuario
 from app import db
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
@@ -12,12 +11,11 @@ def registro():
     data = request.get_json()
     session = db.session
     try:
-        nombre_usuario = data['nombre_usuario'].lower()
-        usuario = db.query(Usuario).filter(Usuario.nombre_usuario == nombre_usuario).first()
+        usuario = session.query(Usuario).filter(Usuario.nombre_usuario == data['nombre_usuario']).first()
         if usuario:
             return jsonify({"mensaje": "Usuario ya registrado"}), 400
         nuevo_usuario = Usuario(
-            nombre_usuario=nombre_usuario,
+            nombre_usuario=data['nombre_usuario'],
             imagen_perfil=data.get('imagen_perfil')
         )
         nuevo_usuario.set_password(data['contrasena'])
@@ -25,11 +23,9 @@ def registro():
         session.commit()
         session.refresh(nuevo_usuario)
         return jsonify({"mensaje": "Usuario registrado"}), 201
-    except IntegrityError:
-        db.rollback()
-        return jsonify({"mensaje": "Usuario ya registrado"}), 400
-    finally:
-        db.close()
+    except Exception as e:
+        session.rollback()
+        return jsonify({"mensaje": str(e)}), 500
 
 @auth_bp.route('/login', methods=['POST'])
 def login():
@@ -46,11 +42,6 @@ def login():
     except Exception as e:
         return jsonify({"mensaje": str(e)}), 500
 
-
-@auth_bp.route('/logout', methods=['POST'])
-@jwt_required()
-def logout():
-    return jsonify({"mensaje": "Sesión cerrada"}), 200
 
 @auth_bp.route('/usuarios/me', methods=['GET'])
 @jwt_required()
