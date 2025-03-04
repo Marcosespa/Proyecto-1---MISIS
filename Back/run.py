@@ -1,19 +1,16 @@
-from app import create_app, db
-from flask_cors import CORS
+from app import create_app
 
 app = create_app()
-with app.app_context():
-    db.create_all()
-    
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8080,debug=True)
+    app.run(host='0.0.0.0', port=8080, debug=True)
 
 
 # # back/run.py
 # # from flask_cors import CORS
 # # back/run.py
 # from flask import Flask, send_from_directory
-# from app import create_app
+# from app import create_app    
 
 # app = Flask(__name__, static_folder='../front')
 
