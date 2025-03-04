@@ -1,19 +1,18 @@
 from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from .config import config
+from werkzeug.utils import secure_filename
 import os
-import shutil
 from pypdf import PdfReader
 from docx import Document
 from .llama_model import generate_summary, answer_question
+from .database import SessionLocal
+from .models import Documento
 
 docs_bp = Blueprint('docs', __name__)
 
 if not os.path.exists(config.UPLOAD_FOLDER):
     os.makedirs(config.UPLOAD_FOLDER)
-
-# Almacenamiento en memoria para el texto de documentos subidos (solo para pruebas)
-user_files = {}
 
 ALLOWED_EXTENSIONS = {"txt", "pdf", "docx", "md"}
 
@@ -41,13 +40,6 @@ def extract_text(filepath: str, filename: str) -> str:
 @jwt_required()
 def upload_file():
     user_id = get_jwt_identity()
-    
-    print("request.method:", request.method)
-    print("request.headers:", request.headers)
-    print("request.files:", request.files)
-    print("request.form:", request.form)  # Para ver si hay otros campos
-    
-    
     if 'file' not in request.files:
         return jsonify({'error': 'No file part in the request'}), 400
     file = request.files['file']
@@ -55,13 +47,30 @@ def upload_file():
         return jsonify({'error': 'No file selected'}), 400
     if not allowed_file(file.filename):
         return jsonify({'error': 'Tipo de archivo no permitido'}), 400
-    filename = file.filename  # Para producción, usar secure_filename
+
+    filename = secure_filename(file.filename)
     file_location = os.path.join(config.UPLOAD_FOLDER, filename)
     file.save(file_location)
     try:
         text = extract_text(file_location, filename)
-        user_files[user_id] = text
         os.remove(file_location)
+        db = SessionLocal()
+        # Si el usuario ya tiene un documento, se actualiza; de lo contrario, se crea uno nuevo
+        documento = db.query(Documento).filter(Documento.user_id == user_id).first()
+        if documento:
+            documento.filename = filename
+            documento.text = text
+            documento.summary = None  # Reinicia el resumen al actualizar el documento
+        else:
+            documento = Documento(
+                user_id=user_id,
+                filename=filename,
+                text=text
+            )
+            db.add(documento)
+        db.commit()
+        db.refresh(documento)
+        db.close()
         return jsonify({'message': 'Archivo cargado y procesado correctamente', 'filename': filename}), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -70,10 +79,17 @@ def upload_file():
 @jwt_required()
 def summarize_text():
     user_id = get_jwt_identity()
-    if user_id not in user_files:
+    db = SessionLocal()
+    documento = db.query(Documento).filter(Documento.user_id == user_id).first()
+    if not documento:
+        db.close()
         return jsonify({'error': 'No se encontró documento cargado para este usuario'}), 400
-    text = user_files[user_id]
-    summary = generate_summary(text, max_tokens=200)
+    summary = generate_summary(documento.text, max_tokens=200)
+    # Se almacena el resumen en el registro del documento
+    documento.summary = summary
+    db.commit()
+    db.refresh(documento)
+    db.close()
     return jsonify({'summary': summary}), 200
 
 @docs_bp.route('/ask', methods=['POST'])
@@ -83,9 +99,12 @@ def ask_question():
     data = request.get_json()
     if not data or "question" not in data:
         return jsonify({'error': 'No se proporcionó la pregunta'}), 400
-    if user_id not in user_files or not user_files[user_id].strip():
+    db = SessionLocal()
+    documento = db.query(Documento).filter(Documento.user_id == user_id).first()
+    if not documento or not documento.text.strip():
+        db.close()
         return jsonify({'error': 'No se encontró documento cargado para este usuario'}), 400
     question = data["question"]
-    context = user_files[user_id]
-    answer = answer_question(question, context, max_tokens=100)
+    answer = answer_question(question, documento.text, max_tokens=100)
+    db.close()
     return jsonify({'answer': answer}), 200

@@ -3,7 +3,7 @@ import os
 import io
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import pytest
-from app.main import app
+from run import app
 from app.database import Base, engine
 
 client = app.test_client()
@@ -124,12 +124,27 @@ def test_upload_invalid_file(auth_header):
     assert response.status_code == 400
     assert response.get_json()["error"] == "Tipo de archivo no permitido"
 
-def test_summarize_without_upload(auth_header):
-    from app.docs import user_files
-    user_files.clear()
-    response = client.post("/docs/summarize", headers=auth_header)
+def test_summarize_without_upload():
+    reg_data = {
+        "nombre_usuario": "nouser",
+        "contrasena": "nopassword",
+        "imagen_perfil": None
+    }
+    client.post("/auth/registro", json=reg_data)
+    response = client.post("/auth/login", json={
+        "nombre_usuario": "nouser",
+        "contrasena": "nopassword"
+    })
+    json_resp = response.get_json()
+    token = json_resp.get("access_token")
+    if not token:
+        pytest.fail("No se obtuvo token en el login")
+    headers = {"Authorization": f"Bearer {token}"}
+
+    response = client.post("/docs/summarize", headers=headers)
     assert response.status_code == 400
     assert response.get_json()["error"] == "No se encontró documento cargado para este usuario"
+
 
 def test_ask_without_question(auth_header):
     response = client.post("/docs/ask", headers=auth_header, json={})
