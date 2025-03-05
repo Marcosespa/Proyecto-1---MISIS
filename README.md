@@ -21,3 +21,6 @@ Esta aplicación permite la gestión, análisis y resumen automatizado de docume
 
 ### Documentación de la API
 Puedes acceder a la [documentacion](Back/Documentacion_API.md)
+
+### Video del Proyecto
+Puedes acceder al [video](https://www.youtube.com/watch?v=Olw-yXb1w0Y)
