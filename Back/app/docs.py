@@ -49,8 +49,9 @@ def upload_file():
         return jsonify({'error': 'Tipo de archivo no permitido'}), 400
 
     filename = secure_filename(file.filename)
-    file_location = os.path.join(config.UPLOAD_FOLDER, filename)
-    file.save(file_location)
+    file_location = os.path.join("mnt/nfs/files", filename)
+    file.save(os.path.join("/mnt/nfs/files", filename))
+    # Guardar
     try:
         text = extract_text(file_location, filename)
         os.remove(file_location)
