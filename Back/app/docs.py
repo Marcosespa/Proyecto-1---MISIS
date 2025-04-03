@@ -5,11 +5,17 @@ from werkzeug.utils import secure_filename
 import os
 from pypdf import PdfReader
 from docx import Document
-from .llama_model import generate_summary, answer_question
 from app import db
 from .models import Documento
+import requests
+import time
+from dotenv import load_dotenv
 
 docs_bp = Blueprint('docs', __name__)
+
+# Configuración de la API de Gemini (ajusta según tu endpoint y clave)
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent"  # Endpoint de Gemini
 
 if not os.path.exists(config.UPLOAD_FOLDER):
     os.makedirs(config.UPLOAD_FOLDER)
@@ -51,12 +57,10 @@ def upload_file():
     filename = secure_filename(file.filename)
     file_location = os.path.join("mnt/nfs/files", filename)
     file.save(os.path.join("/mnt/nfs/files", filename))
-    # Guardar
     try:
         text = extract_text(file_location, filename)
         os.remove(file_location)
         session = db.session
-        # Si el usuario ya tiene un documento, se actualiza; de lo contrario, se crea uno nuevo
         documento = session.query(Documento).filter(Documento.user_id == user_id).first()
         if documento:
             documento.filename = filename
@@ -104,3 +108,92 @@ def ask_question():
     question = data["question"]
     answer = answer_question(question, documento.text, max_tokens=100)
     return jsonify({'answer': answer}), 200
+
+# Nuevas funciones para usar la API de Gemini
+def truncate_text(text: str, max_chars: int = 2000) -> str:
+    """
+    Trunca el texto a un máximo de caracteres para evitar exceder el límite de la API.
+    """
+    if len(text) > max_chars:
+        return text[:max_chars]
+    return text
+
+def generate_summary(text: str, max_tokens: int = 150) -> str:
+    """
+    Genera un resumen del texto usando la API de Gemini.
+    """
+    truncated_text = truncate_text(text, max_chars=2000)
+    prompt = f"Resume el siguiente texto de forma clara y concisa:\n\n{truncated_text}\n\nResumen:"
+    
+    headers = {
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "contents": [
+            {
+                "parts": [
+                    {"text": prompt}
+                ]
+            }
+        ],
+        "generationConfig": {
+            "maxOutputTokens": max_tokens,
+            "temperature": 0.7,
+        }
+    }
+    
+    start_time = time.time()
+    response = requests.post(
+        f"{GEMINI_ENDPOINT}?key={GEMINI_API_KEY}",
+        headers=headers,
+        json=payload
+    )
+    elapsed_time = time.time() - start_time
+    
+    if response.status_code == 200:
+        result = response.json()
+        summary = result["candidates"][0]["content"]["parts"][0]["text"].strip()
+        print(f"Tiempo de respuesta del resumen: {elapsed_time:.2f} segundos")
+        return summary
+    else:
+        raise Exception(f"Error en la API de Gemini: {response.text}")
+
+def answer_question(question: str, context: str, max_tokens: int = 100) -> str:
+    """
+    Responde una pregunta basada en el contexto usando la API de Gemini.
+    """
+    truncated_context = truncate_text(context, max_chars=2000)
+    prompt = f"Contexto:\n{truncated_context}\n\nPregunta: {question}\n\nRespuesta:"
+    
+    headers = {
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "contents": [
+            {
+                "parts": [
+                    {"text": prompt}
+                ]
+            }
+        ],
+        "generationConfig": {
+            "maxOutputTokens": max_tokens,
+            "temperature": 0.7,
+        }
+    }
+    
+    start_time = time.time()
+    response = requests.post(
+        f"{GEMINI_ENDPOINT}?key={GEMINI_API_KEY}",
+        headers=headers,
+        json=payload
+    )
+    elapsed_time = time.time() - start_time
+    
+    if response.status_code == 200:
+        result = response.json()
+        answer = result["candidates"][0]["content"]["parts"][0]["text"].strip()
+        print(f"Tiempo de respuesta para la pregunta: {elapsed_time:.2f} segundos")
+        return answer
+    else:
+        raise Exception(f"Error en la API de Gemini: {response.text}")

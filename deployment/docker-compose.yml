@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: ..
+      dockerfile: deployment/Dockerfile.web
+    container_name: flask-web
+    ports:
+      - "5050:5000"
+    volumes:
+      - nfs-data:/mnt/nfs/files
+    environment:
+      - DATABASE_URL=sqlite:///db.sqlite3  # Reemplazar cuando uses PostgreSQL
+    depends_on:
+      - worker
+
+  worker:
+    build:
+      context: ..
+      dockerfile: deployment/Dockerfile.worker
+    container_name: flask-worker
+    volumes:
+      - nfs-data:/mnt/nfs/files
+    environment:
+      - DATABASE_URL=sqlite:///db.sqlite3
+
+volumes:
+  nfs-data:
