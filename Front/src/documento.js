@@ -1,5 +1,5 @@
 // front/app/documento.js
-const API_URL = 'http://localhost:3000';
+const API_URL = 'http://localhost:5050';
 
 document.addEventListener('DOMContentLoaded', function () {
   const token = localStorage.getItem('token');

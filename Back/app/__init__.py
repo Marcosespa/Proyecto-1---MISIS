@@ -6,6 +6,8 @@ from app.config import Config
 from app.database import db
 import os
 from flask_jwt_extended import jwt_required
+from dotenv import load_dotenv
+load_dotenv()
 
 jwt = JWTManager()
 
@@ -13,8 +15,9 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
     
-    CORS(app, resources={r"/*": {"origins": "*", "allow_headers": ["Authorization", "Content-Type"]}})
-    
+    # CORS(app, resources={r"/*": {"origins": "*", "allow_headers": ["Authorization", "Content-Type"]}})
+    CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
+
     # Crear carpeta de uploads si no existe
     if not os.path.exists(app.config['UPLOAD_FOLDER']):
         os.makedirs(app.config['UPLOAD_FOLDER'])
