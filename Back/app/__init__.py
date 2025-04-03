@@ -5,6 +5,8 @@ from flask_cors import CORS
 from app.config import Config
 from app.database import db
 import os
+from flask_jwt_extended import jwt_required
+
 jwt = JWTManager()
 
 def create_app():
@@ -32,7 +34,7 @@ def create_app():
     app.register_blueprint(docs_bp, url_prefix="/docs")
 
     @app.route('/upload', methods=['POST'])
-    @jwt.required()
+    @jwt_required()
     def wrapped_upload_file():
         return upload_file()
 

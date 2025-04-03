@@ -5,7 +5,7 @@ __pycache__/
 *.pyc
 
 Back/instance/test.db
-.env
+.env.local
 # C extensions
 *.so
 
