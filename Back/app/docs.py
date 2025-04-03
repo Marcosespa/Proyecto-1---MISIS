@@ -10,12 +10,67 @@ from .models import Documento
 import requests
 import time
 from dotenv import load_dotenv
+import re
+import math
+from pypdf import PdfReader
+from docx import Document as DocxDocument
 
 docs_bp = Blueprint('docs', __name__)
 
 # Configuración de la API de Gemini (ajusta según tu endpoint y clave)
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent"  # Endpoint de Gemini
+GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro"
+
+
+
+def clean_text(text):
+    text = re.sub(r'\s+', ' ', text)
+    return text.strip()
+
+def split_text_into_chunks(text, chunk_size=500, overlap=50):
+    text = clean_text(text)
+    words = text.split()
+    total_words = len(words)
+    chunks = []
+
+    start = 0
+    chunk_id = 1
+    total_chunks = math.ceil((total_words - overlap) / (chunk_size - overlap))
+
+    while start < total_words:
+        end = min(start + chunk_size, total_words)
+        chunk_words = words[start:end]
+        chunk_text = ' '.join(chunk_words)
+        
+        chunks.append({
+            "chunk_id": chunk_id,
+            "total_chunks": total_chunks,
+            "start_word": start,
+            "end_word": end,
+            "text": chunk_text
+        })
+        
+        chunk_id += 1
+        start += chunk_size - overlap
+
+    return chunks
+
+def extract_text(filepath: str, filename: str) -> str:
+    extension = filename.rsplit('.', 1)[1].lower()
+    if extension in {"txt", "md"}:
+        with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
+            return f.read()
+    elif extension == "pdf":
+        reader = PdfReader(filepath)
+        return "\n".join([page.extract_text() or "" for page in reader.pages])
+    elif extension == "docx":
+        document = DocxDocument(filepath)
+        return "\n".join([p.text for p in document.paragraphs])
+    else:
+        raise ValueError("Formato de archivo no soportado")
+
+
+
 
 if not os.path.exists(config.UPLOAD_FOLDER):
     os.makedirs(config.UPLOAD_FOLDER)
@@ -25,27 +80,11 @@ ALLOWED_EXTENSIONS = {"txt", "pdf", "docx", "md"}
 def allowed_file(filename: str) -> bool:
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-def extract_text(filepath: str, filename: str) -> str:
-    text = ""
-    extension = filename.rsplit('.', 1)[1].lower()
-    if extension in {"txt", "md"}:
-        with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
-            text = f.read()
-    elif extension == "pdf":
-        reader = PdfReader(filepath)
-        for page in reader.pages:
-            text += page.extract_text() or ""
-    elif extension == "docx":
-        document = Document(filepath)
-        text = "\n".join([paragraph.text for paragraph in document.paragraphs])
-    else:
-        raise ValueError("Formato de archivo no soportado")
-    return text
-
 @docs_bp.route('/upload', methods=['POST'])
 @jwt_required()
 def upload_file():
     user_id = get_jwt_identity()
+    session = db.session
     if 'file' not in request.files:
         return jsonify({'error': 'No file part in the request'}), 400
     file = request.files['file']
@@ -55,12 +94,13 @@ def upload_file():
         return jsonify({'error': 'Tipo de archivo no permitido'}), 400
 
     filename = secure_filename(file.filename)
-    file_location = os.path.join("mnt/nfs/files", filename)
+    file_location = os.path.join("/mnt/nfs/files", filename)
     file.save(os.path.join("/mnt/nfs/files", filename))
     try:
         text = extract_text(file_location, filename)
         os.remove(file_location)
-        session = db.session
+        chunks = split_text_into_chunks(text, chunk_size=300, overlap=50)
+        # session = db.session
         documento = session.query(Documento).filter(Documento.user_id == user_id).first()
         if documento:
             documento.filename = filename
@@ -144,7 +184,7 @@ def generate_summary(text: str, max_tokens: int = 150) -> str:
     
     start_time = time.time()
     response = requests.post(
-        f"{GEMINI_ENDPOINT}?key={GEMINI_API_KEY}",
+        f"{GEMINI_ENDPOINT}:generateContent?key={GEMINI_API_KEY}",
         headers=headers,
         json=payload
     )
