@@ -5,7 +5,7 @@ class Usuario(db.Model):
     __tablename__ = "usuarios"
     id = db.Column(db.Integer, primary_key=True, index=True)
     nombre_usuario = db.Column(db.String(64), unique=True, nullable=False, index=True)
-    contrasena = db.Column(db.String(128), nullable=False)
+    contrasena = db.Column(db.String(512), nullable=False)
     imagen_perfil = db.Column(db.String(256), nullable=True)
     documentos = db.relationship("Documento", backref="usuario", lazy=True)
 
