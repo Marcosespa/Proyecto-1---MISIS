@@ -33,9 +33,9 @@ def create_app():
     app.register_blueprint(auth_bp, url_prefix="/auth")
     app.register_blueprint(docs_bp, url_prefix="/docs")
 
-    @app.route('/upload', methods=['POST'])
-    @jwt_required()
-    def wrapped_upload_file():
-        return upload_file()
+    # @app.route('/upload', methods=['POST'])
+    # @jwt_required()
+    # def wrapped_upload_file():
+    #     return upload_file()
 
     return app

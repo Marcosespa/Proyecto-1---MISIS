@@ -1,4 +1,6 @@
 // front/app/documento.js
+const API_URL = 'http://localhost:3000';
+
 document.addEventListener('DOMContentLoaded', function () {
   const token = localStorage.getItem('token');
   if (!token) {
@@ -10,7 +12,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Obtener datos del usuario autenticado
   function obtenerUsuarioLoggeado() {
-      fetch('https://backend-622667124527.us-central1.run.app/usuarios/me', {
+      fetch(`${API_URL}/me`, {
           method: 'GET',
           headers: {
               'Authorization': `Bearer ${token}`
@@ -52,7 +54,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const formData = new FormData();
     formData.append('file', file); // Coincide con 'file' en el backend
 
-    fetch('https://backend-622667124527.us-central1.run.app/upload', {
+    fetch(`${API_URL}/upload`, {
         method: 'POST',
         headers: {
             'Authorization': `Bearer ${token}`
@@ -78,7 +80,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Generar resumen
   window.summarize = function () {
-    fetch('https://backend-622667124527.us-central1.run.app/summarize', {
+    fetch(`${API_URL}/summarize`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
     })
@@ -106,7 +108,7 @@ document.addEventListener('DOMContentLoaded', function () {
         alert('Escribe una pregunta');
         return;
     }
-    fetch('https://backend-622667124527.us-central1.run.app/ask', {
+    fetch(`${API_URL}/ask`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

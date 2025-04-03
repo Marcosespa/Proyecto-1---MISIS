@@ -1,3 +1,4 @@
+const API_URL = 'http://localhost:3000';
 document.addEventListener('DOMContentLoaded', function () {
   const formLogin = document.getElementById('form-login');
   const formRegistro = document.getElementById('form-registro');
@@ -23,7 +24,7 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 function iniciarSesion(nombreUsuario, contrasena) {
-  fetch('https://backend-622667124527.us-central1.run.app/login', {
+  fetch(`${API_URL}/login`, {
       method: 'POST',
       headers: {
           'Content-Type': 'application/json'
@@ -46,7 +47,7 @@ function iniciarSesion(nombreUsuario, contrasena) {
 }
 
 function registrarUsuario(nombreUsuario, contrasena, imagenPerfil) {
-  fetch('https://backend-622667124527.us-central1.run.app/registro', {
+  fetch(`${API_URL}/registro`, {
       method: 'POST',
       headers: {
           'Content-Type': 'application/json'
