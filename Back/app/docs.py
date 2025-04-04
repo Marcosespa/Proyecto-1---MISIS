@@ -4,7 +4,6 @@ from .config import config
 from werkzeug.utils import secure_filename
 import os
 from pypdf import PdfReader
-from docx import Document
 from app import db
 from .models import Documento
 import requests
@@ -12,16 +11,13 @@ import time
 from dotenv import load_dotenv
 import re
 import math
-from pypdf import PdfReader
 from docx import Document as DocxDocument
 
 docs_bp = Blueprint('docs', __name__)
 
-# Configuración de la API de Gemini (ajusta según tu endpoint y clave)
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro"
-
-
+GEMINI_MODEL = "gemini-1.5-pro-latest"
+GEMINI_BASE_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}"
 
 def clean_text(text):
     text = re.sub(r'\s+', ' ', text)
@@ -98,24 +94,32 @@ def upload_file():
     file.save(os.path.join("/mnt/nfs/files", filename))
     try:
         text = extract_text(file_location, filename)
-        os.remove(file_location)
+        # os.remove(file_location)
         chunks = split_text_into_chunks(text, chunk_size=300, overlap=50)
         # session = db.session
-        documento = session.query(Documento).filter(Documento.user_id == user_id).first()
-        if documento:
-            documento.filename = filename
-            documento.text = text
-            documento.summary = None
-        else:
-            documento = Documento(
-                user_id=user_id,
-                filename=filename,
-                text=text
-            )
-            session.add(documento)
+        # documento = session.query(Documento).filter(Documento.user_id == user_id).first()
+        # if documento:
+        #     documento.filename = filename
+        #     documento.text = text
+        #     documento.summary = None
+        # else:
+        #     documento = Documento(
+        #         user_id=user_id,
+        #         filename=filename,
+        #         text=text
+        #     )
+        #     session.add(documento)
+        documento = Documento(
+            user_id=user_id,
+            filename=filename,
+            text=text,
+        )
+        session.add(documento)
         session.commit()
         session.refresh(documento)
-        return jsonify({'message': 'Archivo cargado y procesado correctamente', 'filename': filename}), 200
+        return jsonify({'message': 'Archivo cargado y procesado correctamente', 
+                        'filename': filename,
+                        'documento_id': documento.id }), 200
     except Exception as e:
         session.rollback()
         return jsonify({'error': str(e)}), 500
@@ -125,9 +129,16 @@ def upload_file():
 def summarize_text():
     user_id = get_jwt_identity()
     session = db.session
-    documento = session.query(Documento).filter(Documento.user_id == user_id).first()
+    # documento = session.query(Documento).filter(Documento.user_id == user_id).first()
+    data = request.get_json()
+    if "documento_id" in data:
+        documento = session.get(Documento, data["documento_id"])
+    else:
+        documento = session.query(Documento).filter(Documento.user_id == user_id).first()
+
     if not documento:
         return jsonify({'error': 'No se encontró documento cargado para este usuario'}), 400
+
     summary = generate_summary(documento.text, max_tokens=200)
     documento.summary = summary
     session.commit()
@@ -139,17 +150,61 @@ def summarize_text():
 def ask_question():
     user_id = get_jwt_identity()
     data = request.get_json()
+    
     if not data or "question" not in data:
         return jsonify({'error': 'No se proporcionó la pregunta'}), 400
+
     session = db.session
-    documento = session.query(Documento).filter(Documento.user_id == user_id).first()
+    documento = None
+
+    if "documento_id" in data:
+        documento = session.get(Documento, data["documento_id"])
+    else:
+        documento = session.query(Documento).filter(Documento.user_id == user_id).first()
+
     if not documento or not documento.text.strip():
         return jsonify({'error': 'No se encontró documento cargado para este usuario'}), 400
+
     question = data["question"]
     answer = answer_question(question, documento.text, max_tokens=100)
     return jsonify({'answer': answer}), 200
 
-# Nuevas funciones para usar la API de Gemini
+
+@docs_bp.route('/list', methods=['GET'])
+@jwt_required()
+def listar_documentos():
+    user_id = get_jwt_identity()
+    session = db.session
+    documentos = session.query(Documento).filter(Documento.user_id == user_id).all()
+    result=[]
+    for doc in documentos:
+        result.append(
+            {
+            "id": doc.id,
+            "filename": doc.filename,
+            "summary": doc.summary if doc.summary else None,
+            "preview": doc.text[:300] + "..." if doc.text else "",
+            }
+        )
+    print("Documentos encontrados:", documentos)
+    return jsonify({"documents": result}), 200
+@docs_bp.route('/<int:document_id>', methods=['DELETE'])
+@jwt_required()
+def eliminar(documentId):
+    user_id = get_jwt_identity()
+    session = db.session
+    document = session.query(documentId).filter_by(id=documentId,user_id=user_id).first()
+    if not document:
+        return jsonify({"error":'documento no encontrado'}),404
+    try:
+        session.delete(document)
+        session.commit()
+        return jsonify({"Exitoso":"Docuemnto eliminado"}),200
+    except Exception as e:
+        session.rollback()
+        return jsonify({'error': f'Error al eliminar el documento: {str(e)}'}), 500        
+
+
 def truncate_text(text: str, max_chars: int = 2000) -> str:
     """
     Trunca el texto a un máximo de caracteres para evitar exceder el límite de la API.
@@ -184,7 +239,7 @@ def generate_summary(text: str, max_tokens: int = 150) -> str:
     
     start_time = time.time()
     response = requests.post(
-        f"{GEMINI_ENDPOINT}:generateContent?key={GEMINI_API_KEY}",
+        f"{GEMINI_BASE_URL}:generateContent?key={GEMINI_API_KEY}",
         headers=headers,
         json=payload
     )
@@ -224,7 +279,7 @@ def answer_question(question: str, context: str, max_tokens: int = 100) -> str:
     
     start_time = time.time()
     response = requests.post(
-        f"{GEMINI_ENDPOINT}?key={GEMINI_API_KEY}",
+        f"{GEMINI_BASE_URL}:generateContent?key={GEMINI_API_KEY}",
         headers=headers,
         json=payload
     )

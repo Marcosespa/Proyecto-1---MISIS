@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 function iniciarSesion(nombreUsuario, contrasena) {
-  fetch(`${API_URL}/login`, {
+  fetch(`${API_URL}/auth/login`, {
       method: 'POST',
       headers: {
           'Content-Type': 'application/json'
@@ -47,7 +47,7 @@ function iniciarSesion(nombreUsuario, contrasena) {
 }
 
 function registrarUsuario(nombreUsuario, contrasena, imagenPerfil) {
-  fetch(`${API_URL}/registro`, {
+  fetch(`${API_URL}/auth/registro`, {
       method: 'POST',
       headers: {
           'Content-Type': 'application/json'
