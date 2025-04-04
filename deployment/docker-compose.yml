@@ -10,7 +10,7 @@ services:
     env_file:
       - ../Back/.env
     ports:
-      - "5050:5000"
+      - "5000:5000"
     volumes:
       - /mnt/nfs/files:/mnt/nfs/files
     depends_on:
