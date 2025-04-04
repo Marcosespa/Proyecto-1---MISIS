@@ -1,4 +1,4 @@
-version: '3.8'
+# version: '3.8'
 
 services:
   web:
@@ -11,7 +11,7 @@ services:
     ports:
       - "5050:5000"
     volumes:
-      - nfs-data:/mnt/nfs/files
+      - /mnt/nfs/files:/mnt/nfs/files
     depends_on:
       - worker
 
@@ -21,9 +21,13 @@ services:
       dockerfile: deployment/Dockerfile.worker
     container_name: flask-worker
     volumes:
-      - nfs-data:/mnt/nfs/files
+      - /mnt/nfs/files:/mnt/nfs/files
     env_file:
       - ../Back/.env
-
-volumes:
-  nfs-data:
+  front:
+    build:
+      context: ..
+      dockerfile: deployment/Dockerfile.front
+    container_name: front-app
+    ports:
+      - "8080:80"

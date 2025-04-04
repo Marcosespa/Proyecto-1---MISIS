@@ -1,0 +1,12 @@
+# Dockerfile.front
+FROM node:18-alpine
+
+WORKDIR /usr/share/nginx/html
+
+COPY ./Front/ .
+
+RUN npm install -g serve
+
+EXPOSE 80
+
+CMD ["serve", "-s", ".", "-l", "80"]
