@@ -21,5 +21,6 @@ class Documento(db.Model):
     id = db.Column(db.Integer, primary_key=True, index=True)
     user_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=False)
     filename = db.Column(db.String(256), nullable=False)
-    text = db.Column(db.Text, nullable=False)
+    text = db.Column(db.Text, nullable=True)
     summary = db.Column(db.Text, nullable=True)
+    status=db.Column(db.String(20),default="pending")

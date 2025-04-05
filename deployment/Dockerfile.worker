@@ -1,13 +1,16 @@
-# Dockerfile.worker
+#Dockerfile.worker
 FROM python:3.10-slim
 
 WORKDIR /worker
 
 COPY ./Back/app /worker/app
+
 COPY ./Back/requirements.txt /worker/
 
 COPY ./deployment/worker.py /worker/worker.py
 
 RUN pip install --no-cache-dir -r requirements.txt
+
+ENV NFS_PATH=/mnt/nfs/files
 
 CMD ["python", "worker.py"]

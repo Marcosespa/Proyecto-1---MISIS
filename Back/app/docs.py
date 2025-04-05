@@ -91,11 +91,11 @@ def upload_file():
 
     filename = secure_filename(file.filename)
     file_location = os.path.join("/mnt/nfs/files", filename)
-    file.save(os.path.join("/mnt/nfs/files", filename))
+    file.save(file_location)
     try:
-        text = extract_text(file_location, filename)
+        # text = extract_text(file_location, filename)
         # os.remove(file_location)
-        chunks = split_text_into_chunks(text, chunk_size=300, overlap=50)
+        # chunks = split_text_into_chunks(text, chunk_size=300, overlap=50)
         # session = db.session
         # documento = session.query(Documento).filter(Documento.user_id == user_id).first()
         # if documento:
@@ -112,7 +112,9 @@ def upload_file():
         documento = Documento(
             user_id=user_id,
             filename=filename,
-            text=text,
+            text="",
+            summary=None,
+            status="pending"
         )
         session.add(documento)
         session.commit()
