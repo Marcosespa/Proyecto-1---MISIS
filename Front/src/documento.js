@@ -195,7 +195,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     window.logout = function () {
         localStorage.removeItem('token');
-        window.location.href = '/index.html';
+        window.location.href = 'index.html';
     };
 
     obtenerUsuarioLoggeado();
