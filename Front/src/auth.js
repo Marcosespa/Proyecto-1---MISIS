@@ -1,6 +1,5 @@
 // const API_URL = 'http://localhost:5050';
-const API_URL = 'http://34.136.155.161:5000';
-
+const API_URL = 'http://35.238.74.4:5000';
 document.addEventListener('DOMContentLoaded', function () {
   const formLogin = document.getElementById('form-login');
   const formRegistro = document.getElementById('form-registro');
