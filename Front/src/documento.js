@@ -5,7 +5,7 @@ const API_URL = 'http://35.238.74.4:5000';
 document.addEventListener('DOMContentLoaded', function () {
     const token = localStorage.getItem('token');
     if (!token) {
-        window.location.href = '/index.html';
+        window.location.href = './index.html';
         return;
     }
 
@@ -195,7 +195,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     window.logout = function () {
         localStorage.removeItem('token');
-        window.location.href = 'index.html';
+        window.location.href = './index.html';
     };
 
     obtenerUsuarioLoggeado();
