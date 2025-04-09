@@ -65,9 +65,6 @@ def extract_text(filepath: str, filename: str) -> str:
     else:
         raise ValueError("Formato de archivo no soportado")
 
-
-
-
 if not os.path.exists(config.UPLOAD_FOLDER):
     os.makedirs(config.UPLOAD_FOLDER)
 
