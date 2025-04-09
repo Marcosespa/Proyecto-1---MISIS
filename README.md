@@ -45,7 +45,7 @@ Esta aplicación permite a los usuarios gestionar documentos, generar resúmenes
 - Permite que el backend almacene archivos subidos y que el worker los procese desde un lugar centralizado.
 
 ### Documentación de la API
-Puedes acceder a la [documentacion](Back/Documentacion_API.md)
+Puedes acceder a la [documentacion](/Documentacion_API.md)
 
 ### Video del Proyecto
 Puedes acceder al [video](https://youtu.be/Gef31CPq8DE)
