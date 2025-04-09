@@ -1,4 +1,4 @@
-# 📝 Proyecto 1 - Entrega 2 
+#  Proyecto 1 - Entrega 2 
 
 Esta aplicación permite a los usuarios gestionar documentos, generar resúmenes y obtener respuestas a preguntas basadas en su contenido. En lugar de usar un modelo local como Llama o Mistral 7B, ahora utiliza la **API de Gemini** para procesar el texto de forma eficiente. Incluye un backend con Flask, un frontend simple y un sistema de procesamiento en segundo plano con un worker.
 
