@@ -1,4 +1,4 @@
-#  Proyecto 1 - Entrega 2 
+# Proyecto 1 - Entrega 2 
 
 Esta aplicación permite a los usuarios gestionar documentos, generar resúmenes y obtener respuestas a preguntas basadas en su contenido. En lugar de usar un modelo local como Llama o Mistral 7B, ahora utiliza la **API de Gemini** para procesar el texto de forma eficiente. Incluye un backend con Flask, un frontend simple y un sistema de procesamiento en segundo plano con un worker.
 
@@ -43,3 +43,10 @@ Esta aplicación permite a los usuarios gestionar documentos, generar resúmenes
 ###   Funcionalidades:
 - Exporta la carpeta /mnt/nfs/files vía NFS a las otras dos VMs (web-server-vm y worker-vm).
 - Permite que el backend almacene archivos subidos y que el worker los procese desde un lugar centralizado.
+
+### Documentación de la API
+Puedes acceder a la [documentacion](Back/Documentacion_API.md)
+
+### Video del Proyecto
+Puedes acceder al [video](https://youtu.be/Gef31CPq8DE)
+
