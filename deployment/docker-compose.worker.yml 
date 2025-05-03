@@ -1,0 +1,11 @@
+version: "3.8"
+services:
+  worker:
+    build:
+      context: ..
+      dockerfile: deployment/Dockerfile.worker
+    container_name: flask-worker
+    env_file:
+      - ../Back/.env
+    volumes:
+      - /mnt/nfs/files:/mnt/nfs/files
