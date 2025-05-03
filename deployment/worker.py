@@ -10,7 +10,7 @@ from app.docs import extract_text
 
 app = create_app()
 
-NFS_PATH = "/mnt/nfs/files"
+NFS_PATH = "/mnt/files"
 
 def process_pending_documents():
     with app.app_context(): 
