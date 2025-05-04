@@ -1,3 +1,5 @@
+// const API_URL = 'http://localhost:5050';
+const API_URL = 'http://35.238.74.4:5000';
 document.addEventListener('DOMContentLoaded', function () {
   const formLogin = document.getElementById('form-login');
   const formRegistro = document.getElementById('form-registro');
@@ -12,6 +14,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   if (formRegistro) {
+
       formRegistro.addEventListener('submit', function (event) {
           event.preventDefault();
           const nombreUsuario = document.getElementById('nombre-usuario').value;
@@ -23,7 +26,7 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 function iniciarSesion(nombreUsuario, contrasena) {
-  fetch('https://backend-622667124527.us-central1.run.app/login', {
+  fetch(`${API_URL}/auth/login`, {
       method: 'POST',
       headers: {
           'Content-Type': 'application/json'
@@ -37,8 +40,8 @@ function iniciarSesion(nombreUsuario, contrasena) {
   .then(data => {
       if (data.access_token) {
           localStorage.setItem('token', data.access_token);
-          window.location.href = '/resumen.html';
-      } else {
+          window.location.href = './resumen.html';
+        } else {
           alert('Error al iniciar sesión');
       }
   })
@@ -46,7 +49,7 @@ function iniciarSesion(nombreUsuario, contrasena) {
 }
 
 function registrarUsuario(nombreUsuario, contrasena, imagenPerfil) {
-  fetch('https://backend-622667124527.us-central1.run.app/registro', {
+  fetch(`${API_URL}/auth/registro`, {
       method: 'POST',
       headers: {
           'Content-Type': 'application/json'
@@ -60,8 +63,8 @@ function registrarUsuario(nombreUsuario, contrasena, imagenPerfil) {
   .then(response => response.json())
   .then(data => {
       if (data.mensaje === 'Usuario registrado') {
-          window.location.href = '/resumen.html';
-      } else {
+        window.location.href = './resumen.html';
+    } else {
           alert('Error al registrar usuario');
       }
   })

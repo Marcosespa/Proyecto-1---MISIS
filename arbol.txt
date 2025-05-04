@@ -1,0 +1,37 @@
+.
+├── Back
+│   ├── API MISIS - Colección de Tests.postman_collection.json
+│   ├── Colection pruebas.postman_collection.json
+│   ├── Documentacion_API.md
+│   ├── app
+│   │   ├── auth.py
+│   │   ├── config.py
+│   │   ├── database.py
+│   │   ├── docs.py
+│   │   └── models.py
+│   ├── bitcoin.pdf
+│   ├── init_db.py
+│   ├── pytest.ini
+│   ├── requirements.txt
+│   └── run.py
+├── Front
+│   ├── index.html
+│   ├── registro.html
+│   ├── resumen.html
+│   └── src
+│       ├── auth.js
+│       ├── documento.js
+│       └── styles.css
+├── README.md
+├── arbol.txt
+├── deployment
+│   ├── Dockerfile.front
+│   ├── Dockerfile.web
+│   ├── Dockerfile.worker
+│   ├── docker-compose.yml
+│   ├── start_web.sh
+│   ├── start_worker.sh
+│   └── worker.py
+├── uploads
+
+1599 directories, 13824 files

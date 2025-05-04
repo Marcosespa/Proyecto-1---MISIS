@@ -1,43 +1,47 @@
-from flask import Flask
+from flask import Flask,jsonify
 from flask_sqlalchemy import SQLAlchemy
-from flask_jwt_extended import JWTManager, jwt_required
+from flask_jwt_extended import JWTManager
 from flask_cors import CORS
+from app.config import Config
+from app.database import db
 import os
+from flask_jwt_extended import jwt_required
+from dotenv import load_dotenv
+load_dotenv()
 
-db = SQLAlchemy()
 jwt = JWTManager()
-UPLOAD_FOLDER = 'uploads'
 
 def create_app():
     app = Flask(__name__)
-    CORS(app, resources={r"/*": {"origins": "*", "allow_headers": ["Authorization", "Content-Type"]}})
+    app.config.from_object(Config)
     
-    # Cargar configuración
-    app.config.from_object('app.config.Config')
-    app.config['JWT_SECRET_KEY'] = 'super-secret-key'
-    app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+    # CORS(app, resources={r"/*": {"origins": "*", "allow_headers": ["Authorization", "Content-Type"]}})
+    CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
 
     # Crear carpeta de uploads si no existe
     if not os.path.exists(app.config['UPLOAD_FOLDER']):
         os.makedirs(app.config['UPLOAD_FOLDER'])
-    
+
     # Inicializar extensiones
     db.init_app(app)
     jwt.init_app(app)
-    
-    # Importar Blueprints
+
+    @app.route('/')
+    def index():
+        return "API corriendo"
+
+    # Registrar Blueprints
     from app.auth import auth_bp 
     from app.docs import docs_bp, upload_file
     app.register_blueprint(auth_bp, url_prefix="/auth")
     app.register_blueprint(docs_bp, url_prefix="/docs")
-    
-    @app.route('/upload', methods=['POST'])
-    @jwt_required()
-    def wrapped_upload_file():
-        return upload_file()
-    
-    from app.models import Usuario, Documento
-    with app.app_context():
-        db.create_all()
-    
+
+    # @app.route('/upload', methods=['POST'])
+    # @jwt_required()
+    # def wrapped_upload_file():
+    #     return upload_file()
+    @app.route('/health')
+    def health():
+        return jsonify({'status': 'ok'})
+
     return app
