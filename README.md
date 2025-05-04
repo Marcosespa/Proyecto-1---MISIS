@@ -1,4 +1,4 @@
-# Proyecto 1 - Entrega 2 
+# Proyecto 1 - Entrega 3
 
 Esta aplicación permite a los usuarios gestionar documentos, generar resúmenes y obtener respuestas a preguntas basadas en su contenido. En lugar de usar un modelo local como Llama o Mistral 7B, ahora utiliza la **API de Gemini** para procesar el texto de forma eficiente. Incluye un backend con Flask, un frontend simple y un sistema de procesamiento en segundo plano con un worker.
 
@@ -11,42 +11,48 @@ Esta aplicación permite a los usuarios gestionar documentos, generar resúmenes
 - Flexibilidad: Puedes usar un documento_id para trabajar con documentos específicos.
 - Texto: Nuevas funciones como clean_text, split_text_into_chunks y truncate_text optimizan el manejo del texto.
 ---
-##  `web-server-vm` — **Servidor Principal (Frontend + Backend)**
-
-###   Funcionalidades:
-
-- Corre el **backend Flask** (`web-app`) en el puerto **5000**.
-- Corre el **frontend HTML/JS** (`front-app`) en el puerto **80**.
-- Ambos acceden a la carpeta compartida `/mnt/nfs/files` montada desde un servidor NFS.
-- Permite:
-  - Registro e inicio de sesión de usuarios (usando JWT).
-  - Carga de documentos en formatos como PDF, TXT, DOCX y Markdown.
-  - Generación de resúmenes y respuestas a preguntas usando la API de Gemini.
-- Nuevas rutas:
-  - `/list`: Muestra todos los documentos del usuario con resumen y vista previa.
-  - `/delete/<int:document_id>`: Elimina un documento específico (con verificación de propiedad).
-- Soporte para documentos específicos mediante `documento_id` en rutas como `/ask` y `/summarize`.
 
 
-##  worker-vm — Procesamiento en Segundo Plano
-###   Funcionalidades:
-- Corre worker.py dentro de un contenedor Docker.
-- Lee archivos desde /mnt/nfs/files.
-- Procesa documentos con status = "pending" en la base de datos.
-- Extrae el texto de los archivos y lo guarda, marcando el documento como processed.
-- Usa funciones como:
-- clean_text: Normaliza el texto eliminando espacios excesivos.
-- split_text_into_chunks: Divide textos largos en fragmentos con solapamiento.
-- truncate_text: Limita el texto a 2000 caracteres para la API.
+##  Componentes Principales
 
-##  nfs-vm — Servidor de Archivos Compartido
-###   Funcionalidades:
-- Exporta la carpeta /mnt/nfs/files vía NFS a las otras dos VMs (web-server-vm y worker-vm).
-- Permite que el backend almacene archivos subidos y que el worker los procese desde un lugar centralizado.
+### 1. Load Balancer  
+- **first‑balancer**: External HTTP(S) Load Balancer global  
+- Distribuye tráfico a las réplicas del Web Tier  
+
+### 2. Web Tier – Managed Instance Group (`instance-group-1`)  
+- **Instancias**: f1‑micro (1–3 réplicas) en us‑central1‑a, ‑b y ‑c  
+- **Contenedores**:
+  - **Front**: HTML/CSS/JS servido en el puerto 80  
+  - **Back**: Flask API en el puerto 5000  
+  - Llamadas a la API de Gemini para IA  
+- **Autoscaling**: CPU ≥ 60 % → escala; Auto‑healing via `/healthz`
+
+### 3. NFS‑VM  
+- VM e2‑medium en us‑central1‑a  
+- Exporta `/mnt/nfs/files` vía NFS  
+- Montada por todas las réplicas web y por Worker‑VM
+
+### 4. Worker‑VM  
+- VM f1‑micro en us‑central1‑a  
+- Contenedor que:
+  1. Consulta Cloud SQL por documentos `pending`
+  2. Lee archivos de NFS
+  3. Procesa texto y genera resumen/QA con Gemini API
+  4. Guarda resultado en NFS y marca `processed`
+
+### 5. Cloud SQL (Postgres)  
+- Instancia gestionada en us‑central1‑c  
+- Guarda usuarios, metadatos de documentos y estados de procesamiento
+
+### 6. Cloud Monitoring  
+- Vigila CPU, latencia y tamaño del MIG  
+- Dispara escalado y alertas ante fallos
 
 ### Documentación de la API
 Puedes acceder a la [documentacion](/Documentacion_API.md)
 
 ### Video del Proyecto
-Puedes acceder al [video](https://youtu.be/Gef31CPq8DE)
+Puedes acceder al [video](https://youtu.be/yIA_pL5DmYQ)
+
+
 
