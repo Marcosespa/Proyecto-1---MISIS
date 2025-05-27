@@ -1,0 +1,53 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: cloudsql-db-credentials
+type: Opaque
+data:
+  username: <base64-encoded-username>
+  password: <base64-encoded-password>
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cloudsql-proxy
+spec:
+  ports:
+  - port: 5432
+    targetPort: 5432
+  selector:
+    app: cloudsql-proxy
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloudsql-proxy
+spec:
+  selector:
+    matchLabels:
+      app: cloudsql-proxy
+  template:
+    metadata:
+      labels:
+        app: cloudsql-proxy
+    spec:
+      containers:
+      - name: cloudsql-proxy
+        image: gcr.io/cloudsql-docker/gce-proxy:1.17
+        command:
+        - "/cloud_sql_proxy"
+        - "--dir=/cloudsql"
+        - "-instances=PROJECT_ID:REGION:INSTANCE_NAME=tcp:5432"
+        - "-credential_file=/secrets/cloudsql/credentials.json"
+        volumeMounts:
+        - name: cloudsql-instance
+          mountPath: /cloudsql
+        - name: cloudsql-credentials
+          mountPath: /secrets/cloudsql
+          readOnly: true
+      volumes:
+      - name: cloudsql-instance
+        emptyDir:
+      - name: cloudsql-credentials
+        secret:
+          secretName: cloudsql-credentials 

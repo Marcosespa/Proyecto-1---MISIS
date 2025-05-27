@@ -12,8 +12,22 @@ from dotenv import load_dotenv
 import re
 import math
 from docx import Document as DocxDocument
+from google.cloud import storage
+from google.cloud import pubsub_v1
+import json
 
 docs_bp = Blueprint('docs', __name__)
+
+# Initialize Cloud Storage client
+storage_client = storage.Client()
+bucket = storage_client.bucket(os.environ.get('BUCKET_NAME'))
+
+# Initialize Pub/Sub publisher
+publisher = pubsub_v1.PublisherClient()
+topic_path = publisher.topic_path(
+    os.environ.get('PROJECT_ID'),
+    os.environ.get('PROCESSING_TOPIC')
+)
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 GEMINI_MODEL = "gemini-1.5-pro-latest"
@@ -87,25 +101,13 @@ def upload_file():
         return jsonify({'error': 'Tipo de archivo no permitido'}), 400
 
     filename = secure_filename(file.filename)
-    file_location = os.path.join("/mnt/files", filename)
-    file.save(file_location)
+    
     try:
-        # text = extract_text(file_location, filename)
-        # os.remove(file_location)
-        # chunks = split_text_into_chunks(text, chunk_size=300, overlap=50)
-        # session = db.session
-        # documento = session.query(Documento).filter(Documento.user_id == user_id).first()
-        # if documento:
-        #     documento.filename = filename
-        #     documento.text = text
-        #     documento.summary = None
-        # else:
-        #     documento = Documento(
-        #         user_id=user_id,
-        #         filename=filename,
-        #         text=text
-        #     )
-        #     session.add(documento)
+        # Upload file to Cloud Storage
+        blob = bucket.blob(filename)
+        blob.upload_from_file(file)
+        
+        # Create document record
         documento = Documento(
             user_id=user_id,
             filename=filename,
@@ -116,9 +118,24 @@ def upload_file():
         session.add(documento)
         session.commit()
         session.refresh(documento)
-        return jsonify({'message': 'Archivo cargado y procesado correctamente', 
-                        'filename': filename,
-                        'documento_id': documento.id }), 200
+        
+        # Publish message to Pub/Sub
+        message = {
+            'document_id': documento.id,
+            'filename': filename
+        }
+        
+        publisher.publish(
+            topic_path,
+            json.dumps(message).encode('utf-8')
+        )
+        
+        return jsonify({
+            'message': 'Archivo cargado correctamente. Procesamiento iniciado.',
+            'filename': filename,
+            'documento_id': documento.id
+        }), 200
+        
     except Exception as e:
         session.rollback()
         return jsonify({'error': str(e)}), 500
