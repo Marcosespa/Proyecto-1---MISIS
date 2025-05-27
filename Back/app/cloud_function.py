@@ -3,11 +3,14 @@ import json
 import base64
 from google.cloud import storage
 from google.cloud import pubsub_v1
-from app import create_app, db
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 from app.models import Documento
 from app.docs import extract_text
 
-app = create_app()
+# Create database engine and session
+engine = create_engine(os.environ.get('DATABASE_URL'))
+Session = sessionmaker(bind=engine)
 
 def process_document(event, context):
     """Cloud Function triggered by Pub/Sub message."""
@@ -31,37 +34,37 @@ def process_document(event, context):
     blob.download_to_filename(temp_path)
     
     try:
-        with app.app_context():
-            doc = Documento.query.get(document_id)
-            if not doc:
-                print(f"Document {document_id} not found")
-                return
-                
-            print(f"📥 Processing document ID={doc.id}, file={doc.filename}")
-            text = extract_text(temp_path, doc.filename)
-            doc.text = text
-            doc.status = "processed"
-            db.session.commit()
+        session = Session()
+        doc = session.query(Documento).get(document_id)
+        if not doc:
+            print(f"Document {document_id} not found")
+            return
             
-            # Publish completion message
-            publisher = pubsub_v1.PublisherClient()
-            topic_path = publisher.topic_path(
-                os.environ.get('PROJECT_ID'),
-                os.environ.get('COMPLETION_TOPIC')
-            )
-            
-            completion_message = {
-                'document_id': document_id,
-                'status': 'processed'
-            }
-            
-            publisher.publish(
-                topic_path,
-                json.dumps(completion_message).encode('utf-8')
-            )
-            
-            print(f"Document ID {doc.id} processed successfully")
-            
+        print(f"📥 Processing document ID={doc.id}, file={doc.filename}")
+        text = extract_text(temp_path, doc.filename)
+        doc.text = text
+        doc.status = "processed"
+        session.commit()
+        
+        # Publish completion message
+        publisher = pubsub_v1.PublisherClient()
+        topic_path = publisher.topic_path(
+            os.environ.get('PROJECT_ID'),
+            os.environ.get('COMPLETION_TOPIC')
+        )
+        
+        completion_message = {
+            'document_id': document_id,
+            'status': 'processed'
+        }
+        
+        publisher.publish(
+            topic_path,
+            json.dumps(completion_message).encode('utf-8')
+        )
+        
+        print(f"Document ID {doc.id} processed successfully")
+        
     except Exception as e:
         print(f"Error processing document ID {document_id}: {str(e)}")
         # Publish error message
@@ -84,4 +87,5 @@ def process_document(event, context):
     finally:
         # Clean up temporary file
         if os.path.exists(temp_path):
-            os.remove(temp_path) 
+            os.remove(temp_path)
+        session.close() 
