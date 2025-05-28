@@ -2,21 +2,50 @@ import os
 import json
 import base64
 import logging
+from datetime import datetime
+from sqlalchemy import Column, Integer, String, DateTime, create_engine
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
 from google.cloud import storage
 from google.cloud import pubsub_v1
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from app.models import Documento, Base
-from app.docs import extract_text
-import functions_framework
-from flask import Flask, request
+import pypdf
+from docx import Document
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Create Flask app for health check
-app = Flask(__name__)
+# SQLAlchemy setup
+Base = declarative_base()
+
+class Documento(Base):
+    __tablename__ = 'documentos'
+    
+    id = Column(Integer, primary_key=True)
+    filename = Column(String, nullable=False)
+    text = Column(String)
+    status = Column(String, default='pending')
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+def extract_text(file_path, filename):
+    """Extract text from PDF or DOCX files."""
+    try:
+        if filename.lower().endswith('.pdf'):
+            with open(file_path, 'rb') as file:
+                pdf = pypdf.PdfReader(file)
+                text = ""
+                for page in pdf.pages:
+                    text += page.extract_text()
+                return text
+        elif filename.lower().endswith('.docx'):
+            doc = Document(file_path)
+            return "\n".join([paragraph.text for paragraph in doc.paragraphs])
+        else:
+            raise ValueError(f"Unsupported file type: {filename}")
+    except Exception as e:
+        logger.error(f"Error extracting text from {filename}: {str(e)}")
+        raise
 
 # Create database engine and session
 DATABASE_URL = os.environ.get('DATABASE_URL')
@@ -28,13 +57,13 @@ engine = create_engine(DATABASE_URL)
 Base.metadata.create_all(engine)
 Session = sessionmaker(bind=engine)
 
-def process_document_impl(cloud_event):
-    """Implementation of document processing logic."""
+def process_document(event, context):
+    """Cloud Function entry point."""
     temp_path = None
     session = None
     try:
-        # Get PubSub message from CloudEvent
-        pubsub_message = base64.b64decode(cloud_event.data["message"]["data"]).decode('utf-8')
+        # Get PubSub message
+        pubsub_message = base64.b64decode(event['data']).decode('utf-8')
         message_data = json.loads(pubsub_message)
         
         document_id = message_data.get('document_id')
@@ -119,23 +148,4 @@ def process_document_impl(cloud_event):
             try:
                 os.remove(temp_path)
             except Exception as e:
-                logger.error(f"Error removing temporary file: {str(e)}")
-
-@functions_framework.cloud_event
-def process_document(cloud_event):
-    """Cloud Function entry point."""
-    try:
-        process_document_impl(cloud_event)
-        return ('OK', 200)
-    except Exception as e:
-        logger.error(f"Error in process_document: {str(e)}")
-        return (str(e), 500)
-
-@app.route('/health', methods=['GET'])
-def health_check():
-    """Health check endpoint."""
-    return 'OK', 200
-
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 8080))
-    app.run(host='0.0.0.0', port=port) 
+                logger.error(f"Error removing temporary file: {str(e)}") 
