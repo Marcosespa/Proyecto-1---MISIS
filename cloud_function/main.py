@@ -27,7 +27,6 @@ class Documento(Base):
     filename = Column(String(255))
     text = Column(Text)
     status = Column(String(50))
-    created_at = Column(DateTime, default=datetime.utcnow)
 
 def extract_text(file_path: str, filename: str) -> str:
     """Extrae el texto de un archivo según su extensión."""
