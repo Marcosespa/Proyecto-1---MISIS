@@ -143,7 +143,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         const summaryMessage = document.getElementById('summary-message');
-        summaryMessage.textContent = 'Generando resumen...';
+        summaryMessage.textContent = 'Verificando documento...';
         summaryMessage.className = '';
 
         // Primero verificar el estado del documento
@@ -159,14 +159,22 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!documento) {
                 throw new Error('Documento no encontrado');
             }
+            
+            // Verificar el estado del documento
             if (documento.status === 'pending') {
-                throw new Error('El documento aún está siendo procesado. Por favor, espera unos minutos e intenta nuevamente.');
+                summaryMessage.textContent = 'El documento aún está siendo procesado. Por favor, espera unos minutos e intenta nuevamente.';
+                summaryMessage.className = 'warning';
+                return null; // No continuar con el resumen
             }
-            if (!documento.text) {
-                throw new Error('El documento no tiene texto para resumir');
+            
+            if (!documento.text || documento.text.trim() === '') {
+                summaryMessage.textContent = 'El documento no tiene texto para resumir. Por favor, intenta subir el documento nuevamente.';
+                summaryMessage.className = 'error';
+                return null; // No continuar con el resumen
             }
             
             // Si todo está bien, proceder con el resumen
+            summaryMessage.textContent = 'Generando resumen...';
             return fetch(`${API_URL}/docs/summarize`, {
                 method: 'POST',
                 headers: {
@@ -177,6 +185,7 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         })
         .then(response => {
+            if (!response) return; // Si response es null, significa que hubo un error en la verificación
             if (!response.ok) {
                 if (response.status === 401) {
                     throw new Error('Sesión expirada. Por favor, inicia sesión nuevamente.');
@@ -193,6 +202,7 @@ document.addEventListener('DOMContentLoaded', function () {
             return response.json();
         })
         .then(data => {
+            if (!data) return; // Si data es null, significa que hubo un error en la verificación
             document.getElementById('summary-result').value = data.summary;
             summaryMessage.textContent = 'Resumen generado';
             summaryMessage.className = 'success';
@@ -206,6 +216,43 @@ document.addEventListener('DOMContentLoaded', function () {
                     window.location.href = './index.html';
                 }, 2000);
             }
+        });
+    };
+
+    // Función para reintentar el procesamiento del documento
+    window.retryProcessing = function() {
+        const documentoId = localStorage.getItem('documento_id');
+        const token = localStorage.getItem('token');
+        
+        if (!token || !documentoId) {
+            alert('No hay sesión activa o documento seleccionado');
+            return;
+        }
+
+        const summaryMessage = document.getElementById('summary-message');
+        summaryMessage.textContent = 'Reintentando procesamiento...';
+        summaryMessage.className = '';
+
+        fetch(`${API_URL}/docs/upload`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ documento_id: parseInt(documentoId) })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                throw new Error(data.error);
+            }
+            summaryMessage.textContent = 'Procesamiento reiniciado. Por favor, espera unos minutos e intenta generar el resumen nuevamente.';
+            summaryMessage.className = 'success';
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            summaryMessage.textContent = `Error al reintentar procesamiento: ${error.message}`;
+            summaryMessage.className = 'error';
         });
     };
 

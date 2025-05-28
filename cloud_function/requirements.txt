@@ -1,5 +1,7 @@
-functions-framework==3.4.0
-google-cloud-storage==2.10.0
-google-cloud-pubsub==2.18.4
-sqlalchemy==1.4.23
-psycopg2-binary==2.9.9
+functions-framework==3.*
+google-cloud-storage==2.*
+google-cloud-pubsub==2.*
+sqlalchemy==1.*
+psycopg2-binary==2.*
+pypdf==3.*
+python-docx==0.8.*

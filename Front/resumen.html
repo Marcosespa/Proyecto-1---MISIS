@@ -145,10 +145,11 @@
 
         <!-- Resumen -->
         <div class="section">
-            <h2>Obtener Resumen</h2>
-            <button class="btn btn-primary" onclick="summarize()">Generar Resumen</button>
-            <p id="summary-message" class="mb-2"></p>
-            <textarea id="summary-result" class="form-control" readonly></textarea>
+            <h2>Generar Resumen</h2>
+            <button onclick="summarize()">Obtener Resumen</button>
+            <button onclick="retryProcessing()" style="margin-left: 10px; background-color: #ffa500;">Reintentar Procesamiento</button>
+            <p id="summary-message"></p>
+            <textarea id="summary-result" readonly></textarea>
         </div>
 
         <!-- Preguntas -->

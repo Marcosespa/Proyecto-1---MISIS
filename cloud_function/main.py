@@ -10,6 +10,8 @@ from google.cloud import storage
 from google.cloud import pubsub_v1
 import tempfile
 import functions_framework
+from pypdf import PdfReader
+from docx import Document as DocxDocument
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -27,13 +29,25 @@ class Documento(Base):
     status = Column(String(50))
     created_at = Column(DateTime, default=datetime.utcnow)
 
-def extract_text(file_path: str) -> str:
-    """Extrae el texto de un archivo."""
+def extract_text(file_path: str, filename: str) -> str:
+    """Extrae el texto de un archivo según su extensión."""
     try:
-        with open(file_path, 'r', encoding='utf-8') as file:
-            return file.read()
+        extension = filename.rsplit('.', 1)[1].lower()
+        logger.info(f"Extrayendo texto de archivo {filename} con extensión {extension}")
+        
+        if extension in {"txt", "md"}:
+            with open(file_path, 'r', encoding='utf-8', errors='ignore') as file:
+                return file.read()
+        elif extension == "pdf":
+            reader = PdfReader(file_path)
+            return "\n".join([page.extract_text() or "" for page in reader.pages])
+        elif extension == "docx":
+            document = DocxDocument(file_path)
+            return "\n".join([p.text for p in document.paragraphs])
+        else:
+            raise ValueError(f"Formato de archivo no soportado: {extension}")
     except Exception as e:
-        logger.error(f"Error al leer el archivo: {str(e)}")
+        logger.error(f"Error al extraer texto del archivo: {str(e)}")
         raise
 
 # Create database engine and session
@@ -82,7 +96,7 @@ def process_document(cloud_event):
             return
             
         logger.info(f"Processing document ID={doc.id}, file={doc.filename}")
-        text = extract_text(temp_path)
+        text = extract_text(temp_path, filename)
         doc.text = text
         doc.status = "processed"
         session.commit()
@@ -110,6 +124,10 @@ def process_document(cloud_event):
         logger.error(f"Error procesando documento: {str(e)}")
         if session:
             session.rollback()
+            # Actualizar el estado del documento a error
+            if doc:
+                doc.status = "error"
+                session.commit()
         
         # Publish error message
         try:
