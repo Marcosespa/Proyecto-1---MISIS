@@ -128,11 +128,24 @@ document.addEventListener('DOMContentLoaded', function () {
 
     window.summarize = function () {
         const documentoId = localStorage.getItem('documento_id');
+        const token = localStorage.getItem('token');
+        
+        if (!token) {
+            alert('No hay sesión activa. Por favor, inicia sesión nuevamente.');
+            window.location.href = './index.html';
+            return;
+        }
+
         console.log("ID del documento a resumir:", documentoId);
         if (!documentoId) {
             alert('Debes seleccionar o subir un documento primero.');
             return;
         }
+
+        const summaryMessage = document.getElementById('summary-message');
+        summaryMessage.textContent = 'Generando resumen...';
+        summaryMessage.className = '';
+
         fetch(`${API_URL}/docs/summarize`, {
             method: 'POST',
             headers: {
@@ -141,20 +154,36 @@ document.addEventListener('DOMContentLoaded', function () {
             },
             body: JSON.stringify({ documento_id: parseInt(documentoId) })
         })
-        .then(response => response.json().then(data => ({ status: response.status, body: data })))
-        .then(({ status, body }) => {
-            const summaryMessage = document.getElementById('summary-message');
-            if (status === 200) {
-                document.getElementById('summary-result').value = body.summary;
-                summaryMessage.textContent = 'Resumen generado';
-                summaryMessage.className = 'success';
-            } else {
-                throw new Error(body.error || 'Error al generar resumen');
+        .then(response => {
+            if (!response.ok) {
+                if (response.status === 401) {
+                    throw new Error('Sesión expirada. Por favor, inicia sesión nuevamente.');
+                }
+                return response.text().then(text => {
+                    try {
+                        const data = JSON.parse(text);
+                        throw new Error(data.error || 'Error al generar resumen');
+                    } catch (e) {
+                        throw new Error(`Error al generar resumen: ${text}`);
+                    }
+                });
             }
+            return response.json();
+        })
+        .then(data => {
+            document.getElementById('summary-result').value = data.summary;
+            summaryMessage.textContent = 'Resumen generado';
+            summaryMessage.className = 'success';
         })
         .catch(error => {
-            document.getElementById('summary-message').textContent = error.message;
-            document.getElementById('summary-message').className = 'error';
+            console.error('Error:', error);
+            summaryMessage.textContent = error.message;
+            summaryMessage.className = 'error';
+            if (error.message.includes('Sesión expirada')) {
+                setTimeout(() => {
+                    window.location.href = './index.html';
+                }, 2000);
+            }
         });
     };
 
