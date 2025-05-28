@@ -30,6 +30,9 @@ topic_path = publisher.topic_path(
 )
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+print(f"GEMINI_API_KEY configurada: {'Sí' if GEMINI_API_KEY else 'No'}")
+if GEMINI_API_KEY:
+    print(f"Longitud de la API key: {len(GEMINI_API_KEY)}")
 GEMINI_MODEL = "gemini-1.5-pro"
 GEMINI_BASE_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}"
 
