@@ -8,9 +8,19 @@ from sqlalchemy.orm import sessionmaker
 from app.models import Documento
 from app.docs import extract_text
 import functions_framework
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Create database engine and session using TCP/IP connection
-engine = create_engine(os.environ.get('DATABASE_URL'))
+DATABASE_URL = os.environ.get('DATABASE_URL')
+if not DATABASE_URL:
+    raise ValueError("DATABASE_URL environment variable is not set")
+
+logger.info(f"Connecting to database with URL: {DATABASE_URL}")
+engine = create_engine(DATABASE_URL)
 Session = sessionmaker(bind=engine)
 
 @functions_framework.cloud_event
@@ -25,7 +35,7 @@ def process_document(cloud_event):
         filename = message_data.get('filename')
         
         if not document_id or not filename:
-            print("Missing required fields in message")
+            logger.error("Missing required fields in message")
             return
         
         # Initialize Cloud Storage client
@@ -35,16 +45,17 @@ def process_document(cloud_event):
         
         # Download file to temporary location
         temp_path = f"/tmp/{filename}"
+        logger.info(f"Downloading file {filename} to {temp_path}")
         blob.download_to_filename(temp_path)
         
         session = Session()
         try:
             doc = session.query(Documento).get(document_id)
             if not doc:
-                print(f"Document {document_id} not found")
+                logger.error(f"Document {document_id} not found")
                 return
                 
-            print(f"📥 Processing document ID={doc.id}, file={doc.filename}")
+            logger.info(f"Processing document ID={doc.id}, file={doc.filename}")
             text = extract_text(temp_path, doc.filename)
             doc.text = text
             doc.status = "processed"
@@ -67,10 +78,10 @@ def process_document(cloud_event):
                 json.dumps(completion_message).encode('utf-8')
             )
             
-            print(f"Document ID {doc.id} processed successfully")
+            logger.info(f"Document ID {doc.id} processed successfully")
             
         except Exception as e:
-            print(f"Error processing document ID {document_id}: {str(e)}")
+            logger.error(f"Error processing document ID {document_id}: {str(e)}")
             # Publish error message
             publisher = pubsub_v1.PublisherClient()
             topic_path = publisher.topic_path(
@@ -92,7 +103,7 @@ def process_document(cloud_event):
             session.close()
             
     except Exception as e:
-        print(f"Error in function: {str(e)}")
+        logger.error(f"Error in function: {str(e)}")
     finally:
         # Clean up temporary file
         if os.path.exists(temp_path):
