@@ -8,7 +8,7 @@ from sqlalchemy.orm import sessionmaker
 from app.models import Documento
 from app.docs import extract_text
 
-# Create database engine and session
+# Create database engine and session using TCP/IP connection
 engine = create_engine(os.environ.get('DATABASE_URL'))
 Session = sessionmaker(bind=engine)
 
