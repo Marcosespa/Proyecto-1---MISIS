@@ -18,7 +18,7 @@ RUN pip install flask-cors
 # Set environment variables
 ENV PORT=8080
 ENV FLASK_APP=run.py
-ENV FLASK_ENV=production
+ENV FLASK_DEBUG=0
 
 # Run the application
-CMD exec gunicorn --bind :$PORT --workers 1 --threads 8 --timeout 0 app:create_app() 
+CMD ["gunicorn", "--bind", ":8080", "--workers", "1", "--threads", "8", "--timeout", "0", "app:create_app()"] 

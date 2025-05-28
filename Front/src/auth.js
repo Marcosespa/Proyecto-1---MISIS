@@ -15,7 +15,6 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   if (formRegistro) {
-
       formRegistro.addEventListener('submit', function (event) {
           event.preventDefault();
           const nombreUsuario = document.getElementById('nombre-usuario').value;
@@ -41,12 +40,15 @@ function iniciarSesion(nombreUsuario, contrasena) {
   .then(data => {
       if (data.access_token) {
           localStorage.setItem('token', data.access_token);
-          window.location.href = './resumen.html';
-        } else {
+          window.location.href = '/resumen.html';
+      } else {
           alert('Error al iniciar sesión');
       }
   })
-  .catch(error => console.error('Error:', error));
+  .catch(error => {
+      console.error('Error:', error);
+      alert('Error al iniciar sesión');
+  });
 }
 
 function registrarUsuario(nombreUsuario, contrasena, imagenPerfil) {
@@ -64,14 +66,15 @@ function registrarUsuario(nombreUsuario, contrasena, imagenPerfil) {
   .then(response => response.json())
   .then(data => {
       if (data.mensaje === 'Usuario registrado') {
-        window.location.href = './resumen.html';
-    } else {
+          window.location.href = '/resumen.html';
+      } else {
           alert('Error al registrar usuario');
       }
   })
-  .catch(error => console.error('Error:', error));
+  .catch(error => {
+      console.error('Error:', error);
+      alert('Error al registrar usuario');
+  });
 }
-
-
 
 //  python3 -m http.server 3000
