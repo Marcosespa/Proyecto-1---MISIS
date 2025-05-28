@@ -3,6 +3,3 @@ google-cloud-storage==2.10.0
 google-cloud-pubsub==2.18.4
 sqlalchemy==1.4.23
 psycopg2-binary==2.9.9
-pypdf==3.17.1
-python-docx==0.8.11
-google-cloud-logging==3.8.0

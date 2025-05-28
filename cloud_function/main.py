@@ -27,7 +27,6 @@ class Documento(Base):
     text = Column(Text)
     status = Column(String(50))
     created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 def extract_text(file_path: str) -> str:
     """Extrae el texto de un archivo."""
@@ -63,6 +62,8 @@ def process_document(event, context):
         if not document_id or not filename:
             logger.error("Missing required fields in message")
             return
+        
+        logger.info(f"Procesando documento: {filename} (ID: {document_id})")
         
         # Initialize Cloud Storage client
         storage_client = storage.Client()
@@ -106,7 +107,7 @@ def process_document(event, context):
         logger.info(f"Document ID {doc.id} processed successfully")
         
     except Exception as e:
-        logger.error(f"Error in function: {str(e)}")
+        logger.error(f"Error procesando documento: {str(e)}")
         if session:
             session.rollback()
         
@@ -128,6 +129,7 @@ def process_document(event, context):
                 topic_path,
                 json.dumps(error_message).encode('utf-8')
             )
+            logger.info(f"Mensaje de error publicado para documento {document_id}")
         except Exception as pubsub_error:
             logger.error(f"Error publishing error message: {str(pubsub_error)}")
             
