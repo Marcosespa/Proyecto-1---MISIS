@@ -9,10 +9,14 @@ from app.models import Documento
 from app.docs import extract_text
 import functions_framework
 import logging
+from flask import Flask, request
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Create Flask app
+app = Flask(__name__)
 
 # Create database engine and session using TCP/IP connection
 DATABASE_URL = os.environ.get('DATABASE_URL')
@@ -23,9 +27,8 @@ logger.info(f"Connecting to database with URL: {DATABASE_URL}")
 engine = create_engine(DATABASE_URL)
 Session = sessionmaker(bind=engine)
 
-@functions_framework.cloud_event
-def process_document(cloud_event):
-    """Cloud Function triggered by Pub/Sub message."""
+def process_document_impl(cloud_event):
+    """Implementation of document processing logic."""
     temp_path = None
     try:
         # Get PubSub message from CloudEvent
@@ -108,4 +111,23 @@ def process_document(cloud_event):
     finally:
         # Clean up temporary file
         if temp_path and os.path.exists(temp_path):
-            os.remove(temp_path) 
+            os.remove(temp_path)
+
+@functions_framework.cloud_event
+def process_document(cloud_event):
+    """Cloud Function entry point."""
+    return process_document_impl(cloud_event)
+
+@app.route('/', methods=['POST'])
+def handle_request(request):
+    """HTTP endpoint for Cloud Run."""
+    return process_document_impl(request.get_json())
+
+@app.route('/health', methods=['GET'])
+def health_check():
+    """Health check endpoint."""
+    return 'OK', 200
+
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 8080))
+    app.run(host='0.0.0.0', port=port) 
