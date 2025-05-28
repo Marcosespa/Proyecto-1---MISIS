@@ -30,7 +30,7 @@ topic_path = publisher.topic_path(
 )
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-GEMINI_MODEL = "gemini-1.5-pro-latest"
+GEMINI_MODEL = "gemini-1.5-pro"
 GEMINI_BASE_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}"
 
 def clean_text(text):

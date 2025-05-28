@@ -4,7 +4,4 @@ google-cloud-pubsub==2.18.4
 sqlalchemy==1.4.23
 psycopg2-binary==2.9.9
 pypdf==3.17.1
-python-docx==0.8.11
-werkzeug==2.3.7
-flask==2.3.3
-gunicorn==21.2.0 
+python-docx==0.8.11 
