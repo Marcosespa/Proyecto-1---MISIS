@@ -10,7 +10,7 @@ from app.docs import extract_text
 import functions_framework
 import logging
 from flask import Flask, request
-
+# PRUEBASSS
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
