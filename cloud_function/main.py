@@ -7,14 +7,17 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from app.models import Documento
 from app.docs import extract_text
+import functions_framework
 
 # Create database engine and session using TCP/IP connection
 engine = create_engine(os.environ.get('DATABASE_URL'))
 Session = sessionmaker(bind=engine)
 
-def process_document(event, context):
+@functions_framework.cloud_event
+def process_document(cloud_event):
     """Cloud Function triggered by Pub/Sub message."""
-    pubsub_message = base64.b64decode(event['data']).decode('utf-8')
+    # Get PubSub message from CloudEvent
+    pubsub_message = base64.b64decode(cloud_event.data["message"]["data"]).decode('utf-8')
     message_data = json.loads(pubsub_message)
     
     document_id = message_data.get('document_id')
