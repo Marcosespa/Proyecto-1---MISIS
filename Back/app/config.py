@@ -15,5 +15,6 @@ class Config:
     PROCESSING_TOPIC = os.getenv('PROCESSING_TOPIC')
     COMPLETION_TOPIC = os.getenv('COMPLETION_TOPIC')
     ERROR_TOPIC = os.getenv('ERROR_TOPIC')
+    GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 
 config = Config()
