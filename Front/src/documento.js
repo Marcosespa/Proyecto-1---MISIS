@@ -229,31 +229,57 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        const summaryMessage = document.getElementById('summary-message');
-        summaryMessage.textContent = 'Reintentando procesamiento...';
-        summaryMessage.className = '';
+        // Crear un input de tipo file oculto
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.accept = '.pdf,.doc,.docx,.txt';
+        fileInput.style.display = 'none';
+        document.body.appendChild(fileInput);
 
-        fetch(`${API_URL}/docs/upload`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ documento_id: parseInt(documentoId) })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.error) {
-                throw new Error(data.error);
+        // Manejar la selección del archivo
+        fileInput.onchange = function(event) {
+            const file = event.target.files[0];
+            if (!file) {
+                alert('Por favor, selecciona un archivo.');
+                return;
             }
-            summaryMessage.textContent = 'Procesamiento reiniciado. Por favor, espera unos minutos e intenta generar el resumen nuevamente.';
-            summaryMessage.className = 'success';
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            summaryMessage.textContent = `Error al reintentar procesamiento: ${error.message}`;
-            summaryMessage.className = 'error';
-        });
+
+            const summaryMessage = document.getElementById('summary-message');
+            summaryMessage.textContent = 'Reintentando procesamiento...';
+            summaryMessage.className = '';
+
+            // Crear FormData y agregar el archivo
+            const formData = new FormData();
+            formData.append('file', file);
+
+            fetch(`${API_URL}/docs/upload`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                summaryMessage.textContent = 'Procesamiento reiniciado. Por favor, espera unos minutos e intenta generar el resumen nuevamente.';
+                summaryMessage.className = 'success';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                summaryMessage.textContent = `Error al reintentar procesamiento: ${error.message}`;
+                summaryMessage.className = 'error';
+            })
+            .finally(() => {
+                // Limpiar el input de archivo
+                document.body.removeChild(fileInput);
+            });
+        };
+
+        // Simular clic en el input de archivo
+        fileInput.click();
     };
 
     window.askQuestion = function () {
