@@ -146,10 +146,12 @@
         <!-- Resumen -->
         <div class="section">
             <h2>Generar Resumen</h2>
-            <button onclick="summarize()">Obtener Resumen</button>
-            <button onclick="retryProcessing()" style="margin-left: 10px; background-color: #ffa500;">Reintentar Procesamiento</button>
-            <p id="summary-message"></p>
-            <textarea id="summary-result" readonly></textarea>
+            <div class="mb-3">
+                <button class="btn btn-primary" onclick="summarize()">Obtener Resumen</button>
+                <button class="btn btn-warning" onclick="retryProcessing()" style="margin-left: 10px;">Reintentar Procesamiento</button>
+            </div>
+            <p id="summary-message" class="mb-2"></p>
+            <textarea id="summary-result" class="form-control" readonly rows="6" style="min-height: 150px; margin-top: 10px;"></textarea>
         </div>
 
         <!-- Preguntas -->
@@ -167,48 +169,5 @@
     <!-- Bootstrap JS (opcional) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
     <script src="./src/documento.js"></script>
-    <script>
-        const API_URL = 'https://misis-app-1073903910796.us-central1.run.app';
-        
-        document.addEventListener('DOMContentLoaded', function () {
-          const token = localStorage.getItem("token");
-        
-          if (!token) {
-            alert("Debes iniciar sesión");
-            window.location.href = "./index.html";
-            return;
-          }
-        
-          fetch(`${API_URL}/auth/usuarios/me`, {
-            method: "GET",
-            headers: {
-              "Authorization": "Bearer " + token,
-            },
-          })
-          .then((res) => {
-            if (!res.ok) throw new Error("Token inválido o expirado");
-            return res.json();
-          })
-          .then((data) => {
-            document.getElementById("nombre_usuario").textContent = data.nombre_usuario;
-            if (data.imagen_perfil) {
-              const foto = document.getElementById("fotoPerfil");
-              foto.src = data.imagen_perfil;
-              foto.style.display = "block";
-            }
-          })
-          .catch((err) => {
-            console.error('Error:', err);
-            alert("Sesión expirada. Vuelve a iniciar sesión.");
-            localStorage.removeItem("token");
-            window.location.href = "./index.html";
-          });
-        });
-        
-        function logout() {
-          localStorage.removeItem("token");
-          window.location.href = "./index.html";
-        }
-    </script>
 </body>
 </html>
