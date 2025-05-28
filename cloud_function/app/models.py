@@ -1,14 +1,17 @@
-from app import db
+from sqlalchemy import Column, Integer, String, Text, ForeignKey
+from sqlalchemy.orm import relationship
+from sqlalchemy.ext.declarative import declarative_base
 from werkzeug.security import generate_password_hash, check_password_hash
 
-class Usuario(db.Model):
-    __tablename__ = "usuarios"
-    id = db.Column(db.Integer, primary_key=True, index=True)
-    nombre_usuario = db.Column(db.String(64), unique=True, nullable=False, index=True)
-    contrasena = db.Column(db.String(512), nullable=False)
-    imagen_perfil = db.Column(db.String(256), nullable=True)
-    documentos = db.relationship("Documento", backref="usuario", lazy=True)
+Base = declarative_base()
 
+class Usuario(Base):
+    __tablename__ = "usuarios"
+    id = Column(Integer, primary_key=True, index=True)
+    nombre_usuario = Column(String(64), unique=True, nullable=False, index=True)
+    contrasena = Column(String(512), nullable=False)
+    imagen_perfil = Column(String(256), nullable=True)
+    documentos = relationship("Documento", backref="usuario", lazy=True)
 
     def set_password(self, password: str):
         self.contrasena = generate_password_hash(password)
@@ -16,11 +19,11 @@ class Usuario(db.Model):
     def check_password(self, password: str):
         return check_password_hash(self.contrasena, password)
 
-class Documento(db.Model):
+class Documento(Base):
     __tablename__ = 'documentos'
-    id = db.Column(db.Integer, primary_key=True, index=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=False)
-    filename = db.Column(db.String(256), nullable=False)
-    text = db.Column(db.Text, nullable=True)
-    summary = db.Column(db.Text, nullable=True)
-    status=db.Column(db.String(20),default="pending")
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey('usuarios.id'), nullable=False)
+    filename = Column(String(256), nullable=False)
+    text = Column(Text, nullable=True)
+    summary = Column(Text, nullable=True)
+    status = Column(String(20), default="pending")

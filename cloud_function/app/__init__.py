@@ -7,9 +7,21 @@ from app.database import db
 import os
 from flask_jwt_extended import jwt_required
 from dotenv import load_dotenv
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.declarative import declarative_base
+
 load_dotenv()
 
 jwt = JWTManager()
+
+Base = declarative_base()
+
+def init_db(database_url):
+    engine = create_engine(database_url)
+    Base.metadata.create_all(engine)
+    Session = sessionmaker(bind=engine)
+    return Session()
 
 def create_app():
     app = Flask(__name__)

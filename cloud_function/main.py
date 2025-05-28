@@ -5,7 +5,7 @@ from google.cloud import storage
 from google.cloud import pubsub_v1
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from app.models import Documento
+from app.models import Documento, Base
 from app.docs import extract_text
 import functions_framework
 import logging
@@ -21,6 +21,7 @@ if not DATABASE_URL:
 
 logger.info(f"Connecting to database with URL: {DATABASE_URL}")
 engine = create_engine(DATABASE_URL)
+Base.metadata.create_all(engine)  # Create tables if they don't exist
 Session = sessionmaker(bind=engine)
 
 def process_document_impl(cloud_event):
