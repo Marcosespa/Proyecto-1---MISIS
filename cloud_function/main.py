@@ -11,6 +11,7 @@ from google.cloud import pubsub_v1
 import pypdf
 from docx import Document
 import tempfile
+import functions_framework
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -47,13 +48,14 @@ engine = create_engine(DATABASE_URL)
 Base.metadata.create_all(engine)
 Session = sessionmaker(bind=engine)
 
-def process_document(event, context):
+@functions_framework.cloud_event
+def process_document(cloud_event):
     """Cloud Function entry point."""
     temp_path = None
     session = None
     try:
         # Get PubSub message
-        pubsub_message = base64.b64decode(event['data']).decode('utf-8')
+        pubsub_message = base64.b64decode(cloud_event.data["message"]["data"]).decode()
         message_data = json.loads(pubsub_message)
         
         document_id = message_data.get('document_id')
