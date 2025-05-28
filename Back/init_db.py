@@ -17,7 +17,9 @@ sys.path.append(os.path.join(os.path.dirname(__file__), 'Back'))
 def init_db():
     app = create_app()
     with app.app_context():
-        # Create all tables
+        # Eliminar todas las tablas existentes
+        db.drop_all()
+        # Crear todas las tablas
         db.create_all()
         print("Base de datos inicializada correctamente.")
 
