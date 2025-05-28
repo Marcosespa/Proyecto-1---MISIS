@@ -220,6 +220,8 @@ def listar_documentos():
             "filename": doc.filename,
             "summary": doc.summary if doc.summary else None,
             "preview": doc.text[:300] + "..." if doc.text else "",
+            "status": doc.status,
+            "text": doc.text if doc.text else ""
             }
         )
     print("Documentos encontrados:", documentos)
