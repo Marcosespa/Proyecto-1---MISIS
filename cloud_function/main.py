@@ -8,8 +8,6 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from google.cloud import storage
 from google.cloud import pubsub_v1
-import pypdf
-from docx import Document
 import tempfile
 import functions_framework
 
@@ -143,4 +141,4 @@ def process_document(cloud_event):
             try:
                 os.remove(temp_path)
             except Exception as e:
-                logger.error(f"Error removing temporary file: {str(e)}") 
+                logger.error(f"Error removing temporary file: {str(e)}")
