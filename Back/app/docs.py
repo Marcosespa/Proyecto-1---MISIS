@@ -147,7 +147,7 @@ def upload_file():
 @jwt_required()
 def summarize_text():
     try:
-        user_id = get_jwt_identity()
+        user_id = int(get_jwt_identity())
         session = db.session
         data = request.get_json()
         
@@ -184,7 +184,7 @@ def summarize_text():
 @docs_bp.route('/ask', methods=['POST'])
 @jwt_required()
 def ask_question():
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     data = request.get_json()
     
     if not data or "question" not in data:
@@ -209,7 +209,7 @@ def ask_question():
 @docs_bp.route('/list', methods=['GET'])
 @jwt_required()
 def listar_documentos():
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     session = db.session
     documentos = session.query(Documento).filter(Documento.user_id == user_id).all()
     result=[]
@@ -229,7 +229,7 @@ def listar_documentos():
 @docs_bp.route('/<int:document_id>', methods=['DELETE'])
 @jwt_required()
 def eliminar(documentId):
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     session = db.session
     document = session.query(documentId).filter_by(id=documentId,user_id=user_id).first()
     if not document:
