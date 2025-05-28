@@ -146,13 +146,35 @@ document.addEventListener('DOMContentLoaded', function () {
         summaryMessage.textContent = 'Generando resumen...';
         summaryMessage.className = '';
 
-        fetch(`${API_URL}/docs/summarize`, {
-            method: 'POST',
+        // Primero verificar el estado del documento
+        fetch(`${API_URL}/docs/list`, {
+            method: 'GET',
             headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ documento_id: parseInt(documentoId) })
+                'Authorization': `Bearer ${token}`
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            const documento = data.documents.find(doc => doc.id === parseInt(documentoId));
+            if (!documento) {
+                throw new Error('Documento no encontrado');
+            }
+            if (documento.status === 'pending') {
+                throw new Error('El documento aún está siendo procesado. Por favor, espera unos minutos e intenta nuevamente.');
+            }
+            if (!documento.text) {
+                throw new Error('El documento no tiene texto para resumir');
+            }
+            
+            // Si todo está bien, proceder con el resumen
+            return fetch(`${API_URL}/docs/summarize`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ documento_id: parseInt(documentoId) })
+            });
         })
         .then(response => {
             if (!response.ok) {
