@@ -143,23 +143,40 @@ def upload_file():
 @docs_bp.route('/summarize', methods=['POST'])
 @jwt_required()
 def summarize_text():
-    user_id = get_jwt_identity()
-    session = db.session
-    # documento = session.query(Documento).filter(Documento.user_id == user_id).first()
-    data = request.get_json()
-    if "documento_id" in data:
+    try:
+        user_id = get_jwt_identity()
+        session = db.session
+        data = request.get_json()
+        
+        if not data or "documento_id" not in data:
+            return jsonify({'error': 'Se requiere el ID del documento'}), 400
+
         documento = session.get(Documento, data["documento_id"])
-    else:
-        documento = session.query(Documento).filter(Documento.user_id == user_id).first()
+        if not documento:
+            return jsonify({'error': 'No se encontró el documento'}), 404
 
-    if not documento:
-        return jsonify({'error': 'No se encontró documento cargado para este usuario'}), 400
+        if documento.user_id != user_id:
+            return jsonify({'error': 'No tienes permiso para acceder a este documento'}), 403
 
-    summary = generate_summary(documento.text, max_tokens=200)
-    documento.summary = summary
-    session.commit()
-    session.refresh(documento)
-    return jsonify({'summary': summary}), 200
+        if documento.status == "pending":
+            return jsonify({'error': 'El documento aún está siendo procesado'}), 400
+
+        if not documento.text or not documento.text.strip():
+            return jsonify({'error': 'El documento no tiene texto para resumir'}), 400
+
+        if not GEMINI_API_KEY:
+            return jsonify({'error': 'API key de Gemini no configurada'}), 500
+
+        summary = generate_summary(documento.text, max_tokens=200)
+        documento.summary = summary
+        session.commit()
+        session.refresh(documento)
+        return jsonify({'summary': summary}), 200
+
+    except Exception as e:
+        session.rollback()
+        print(f"Error al generar resumen: {str(e)}")
+        return jsonify({'error': f'Error al generar resumen: {str(e)}'}), 500
 
 @docs_bp.route('/ask', methods=['POST'])
 @jwt_required()
@@ -233,41 +250,53 @@ def generate_summary(text: str, max_tokens: int = 150) -> str:
     """
     Genera un resumen del texto usando la API de Gemini.
     """
-    truncated_text = truncate_text(text, max_chars=2000)
-    prompt = f"Resume el siguiente texto de forma clara y concisa:\n\n{truncated_text}\n\nResumen:"
-    
-    headers = {
-        "Content-Type": "application/json",
-    }
-    payload = {
-        "contents": [
-            {
-                "parts": [
-                    {"text": prompt}
-                ]
-            }
-        ],
-        "generationConfig": {
-            "maxOutputTokens": max_tokens,
-            "temperature": 0.7,
+    try:
+        truncated_text = truncate_text(text, max_chars=2000)
+        prompt = f"Resume el siguiente texto de forma clara y concisa:\n\n{truncated_text}\n\nResumen:"
+        
+        headers = {
+            "Content-Type": "application/json",
         }
-    }
-    
-    start_time = time.time()
-    response = requests.post(
-        f"{GEMINI_BASE_URL}:generateContent?key={GEMINI_API_KEY}",
-        headers=headers,
-        json=payload
-    )
-    elapsed_time = time.time() - start_time
-    
-    if response.status_code == 200:
-        result = response.json()
-        summary = result["candidates"][0]["content"]["parts"][0]["text"].strip()
-        print(f"Tiempo de respuesta del resumen: {elapsed_time:.2f} segundos")
-        return summary
-    else:
-        raise Exception(f"Error en la API de Gemini: {response.text}")
+        payload = {
+            "contents": [
+                {
+                    "parts": [
+                        {"text": prompt}
+                    ]
+                }
+            ],
+            "generationConfig": {
+                "maxOutputTokens": max_tokens,
+                "temperature": 0.7,
+            }
+        }
+        
+        start_time = time.time()
+        response = requests.post(
+            f"{GEMINI_BASE_URL}:generateContent?key={GEMINI_API_KEY}",
+            headers=headers,
+            json=payload,
+            timeout=30  # Agregar timeout
+        )
+        elapsed_time = time.time() - start_time
+        
+        if response.status_code == 200:
+            result = response.json()
+            if "candidates" in result and len(result["candidates"]) > 0:
+                summary = result["candidates"][0]["content"]["parts"][0]["text"].strip()
+                print(f"Tiempo de respuesta del resumen: {elapsed_time:.2f} segundos")
+                return summary
+            else:
+                raise Exception("Respuesta de Gemini no contiene el formato esperado")
+        else:
+            raise Exception(f"Error en la API de Gemini: {response.text}")
+
+    except requests.exceptions.Timeout:
+        raise Exception("La API de Gemini tardó demasiado en responder")
+    except requests.exceptions.RequestException as e:
+        raise Exception(f"Error de conexión con Gemini: {str(e)}")
+    except Exception as e:
+        raise Exception(f"Error al generar resumen: {str(e)}")
 
 def answer_question(question: str, context: str, max_tokens: int = 100) -> str:
     """
