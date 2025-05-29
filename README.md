@@ -1,4 +1,4 @@
-# Proyecto 1 - Entrega 3
+# Proyecto 1 - Entrega 4
 
 Esta aplicación permite a los usuarios gestionar documentos, generar resúmenes y obtener respuestas a preguntas basadas en su contenido. En lugar de usar un modelo local como Llama o Mistral 7B, ahora utiliza la **API de Gemini** para procesar el texto de forma eficiente. Incluye un backend con Flask, un frontend simple y un sistema de procesamiento en segundo plano con un worker.
 
@@ -15,30 +15,13 @@ Esta aplicación permite a los usuarios gestionar documentos, generar resúmenes
 
 ##  Componentes Principales
 
-### 1. Load Balancer  
-- **first‑balancer**: External HTTP(S) Load Balancer global  
-- Distribuye tráfico a las réplicas del Web Tier  
+### 1. Cloud Run  
 
-### 2. Web Tier – Managed Instance Group (`instance-group-1`)  
-- **Instancias**: f1‑micro (1–3 réplicas) en us‑central1‑a, ‑b y ‑c  
-- **Contenedores**:
-  - **Front**: HTML/CSS/JS servido en el puerto 80  
-  - **Back**: Flask API en el puerto 5000  
-  - Llamadas a la API de Gemini para IA  
-- **Autoscaling**: CPU ≥ 60 % → escala; Auto‑healing via `/healthz`
+### 2. Pub/Sub
 
-### 3. NFS‑VM  
-- VM e2‑medium en us‑central1‑a  
-- Exporta `/mnt/nfs/files` vía NFS  
-- Montada por todas las réplicas web y por Worker‑VM
+### 3. Cloud Functions
 
-### 4. Worker‑VM  
-- VM f1‑micro en us‑central1‑a  
-- Contenedor que:
-  1. Consulta Cloud SQL por documentos `pending`
-  2. Lee archivos de NFS
-  3. Procesa texto y genera resumen/QA con Gemini API
-  4. Guarda resultado en NFS y marca `processed`
+### 4. Bucket Cloud Storage
 
 ### 5. Cloud SQL (Postgres)  
 - Instancia gestionada en us‑central1‑c  
@@ -52,7 +35,7 @@ Esta aplicación permite a los usuarios gestionar documentos, generar resúmenes
 Puedes acceder a la [documentacion](/Documentacion_API.md)
 
 ### Video del Proyecto
-Puedes acceder al [video](https://youtu.be/yIA_pL5DmYQ)
+Puedes acceder al [video](https://youtu.be/YYK1vjMiQvM)
 
 
 
