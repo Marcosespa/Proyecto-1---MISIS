@@ -1,5 +1,7 @@
 // const API_URL = 'http://localhost:5050';
-const API_URL = 'http://35.238.74.4:5000';
+// const API_URL = 'http://35.238.74.4:5000';
+const API_URL = 'https://misis-app-1073903910796.us-central1.run.app';
+
 document.addEventListener('DOMContentLoaded', function () {
   const formLogin = document.getElementById('form-login');
   const formRegistro = document.getElementById('form-registro');
@@ -14,7 +16,6 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   if (formRegistro) {
-
       formRegistro.addEventListener('submit', function (event) {
           event.preventDefault();
           const nombreUsuario = document.getElementById('nombre-usuario').value;
@@ -36,16 +37,27 @@ function iniciarSesion(nombreUsuario, contrasena) {
           contrasena: contrasena
       })
   })
-  .then(response => response.json())
+  .then(response => {
+      if (!response.ok) {
+          throw new Error('Error en la respuesta del servidor');
+      }
+      return response.json();
+  })
   .then(data => {
       if (data.access_token) {
           localStorage.setItem('token', data.access_token);
-          window.location.href = './resumen.html';
-        } else {
-          alert('Error al iniciar sesión');
+          // Esperar un momento antes de redirigir
+          setTimeout(() => {
+              window.location.href = './resumen.html';
+          }, 100);
+      } else {
+          alert('Error al iniciar sesión: No se recibió el token');
       }
   })
-  .catch(error => console.error('Error:', error));
+  .catch(error => {
+      console.error('Error:', error);
+      alert('Error al iniciar sesión: ' + error.message);
+  });
 }
 
 function registrarUsuario(nombreUsuario, contrasena, imagenPerfil) {
@@ -60,17 +72,24 @@ function registrarUsuario(nombreUsuario, contrasena, imagenPerfil) {
           imagen_perfil: imagenPerfil
       })
   })
-  .then(response => response.json())
+  .then(response => {
+      if (!response.ok) {
+          throw new Error('Error en la respuesta del servidor');
+      }
+      return response.json();
+  })
   .then(data => {
       if (data.mensaje === 'Usuario registrado') {
-        window.location.href = './resumen.html';
-    } else {
-          alert('Error al registrar usuario');
+          // Después de registrar, intentar iniciar sesión automáticamente
+          iniciarSesion(nombreUsuario, contrasena);
+      } else {
+          alert('Error al registrar usuario: ' + (data.mensaje || 'Error desconocido'));
       }
   })
-  .catch(error => console.error('Error:', error));
+  .catch(error => {
+      console.error('Error:', error);
+      alert('Error al registrar usuario: ' + error.message);
+  });
 }
-
-
 
 //  python3 -m http.server 3000

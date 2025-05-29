@@ -1,0 +1,7 @@
+functions-framework==3.*
+google-cloud-storage==2.*
+google-cloud-pubsub==2.*
+sqlalchemy==1.*
+psycopg2-binary==2.*
+pypdf==3.*
+python-docx==0.8.*
