@@ -5,11 +5,8 @@ Esta aplicación permite a los usuarios gestionar documentos, generar resúmenes
 ---
 
 ## Cambios Clave Respecto a la Versión Anterior
-- Modelo: Pasamos de usar Mistral 7B a la API de Gemini para resúmenes y respuestas.
-- Procesamiento: Antes, el texto se extraía al subir el archivo; ahora se guarda como pending y el worker lo procesa después.
-- Rutas: Se añadieron /list y /delete para gestionar mejor los documentos.
-- Flexibilidad: Puedes usar un documento_id para trabajar con documentos específicos.
-- Texto: Nuevas funciones como clean_text, split_text_into_chunks y truncate_text optimizan el manejo del texto.
+- Procesamiento: Antes, el texto se extraía al subir el archivo; ahora se guarda como pending y el worker lo procesa después (Se cambia el worker por pub/sub con cloud Functions).
+- Despliegue: Se usa Cloud Run que garantiza escalabilidad.
 ---
 
 
